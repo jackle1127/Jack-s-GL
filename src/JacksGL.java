@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.DefaultListModel;
+import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -204,6 +205,11 @@ public class JacksGL extends javax.swing.JFrame {
         cube.addFace(1, 5, 6, 2);
         cube.addFace(4, 7, 6, 5);
         glPanel.addGeometry(cube);
+        JacksGeometry clone = cube.clone();
+        clone.x = .2f;
+        clone.y = .2f;
+        clone.z = .2f;
+        glPanel.addGeometry(clone);
         glPanel.addLight(new JacksLight(0, 2, 128, 255, 0,
                 1.5f, -.8f, 1.5f, true));
         glPanel.addLight(new JacksLight(0, 2, 255, 0, 128,
@@ -590,6 +596,11 @@ public class JacksGL extends javax.swing.JFrame {
         jLabel5.setText("Blue");
 
         pnlLightColor.setBackground(new java.awt.Color(0, 0, 0));
+        pnlLightColor.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                pnlLightColorMousePressed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnlLightColorLayout = new javax.swing.GroupLayout(pnlLightColor);
         pnlLightColor.setLayout(pnlLightColorLayout);
@@ -1131,6 +1142,19 @@ public class JacksGL extends javax.swing.JFrame {
         applyLightControl();
     }//GEN-LAST:event_cboLightTypeActionPerformed
 
+    private void pnlLightColorMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlLightColorMousePressed
+        JColorChooser colorChooser = new JColorChooser();
+        Color newColor = colorChooser.showDialog(this, "Pick a color",
+                new Color(sldLightRed.getValue(), sldLightGreen.getValue(),
+                        sldLightBlue.getValue()));
+        if (newColor != null) {
+            sldLightRed.setValue(newColor.getRed());
+            sldLightGreen.setValue(newColor.getGreen());
+            sldLightBlue.setValue(newColor.getBlue());
+            applyLightControl();
+        }
+    }//GEN-LAST:event_pnlLightColorMousePressed
+
     float rotate(float number, float cap) {
         number %= cap;
         if (number < 0) {
@@ -1213,6 +1237,7 @@ public class JacksGL extends javax.swing.JFrame {
             light.lightType = cboLightType.getSelectedIndex();
         }
     }
+
     void warpMouse(int x, int y) {
         if (robot != null) {
             Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
