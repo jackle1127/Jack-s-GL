@@ -1,19 +1,10 @@
-
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class JacksFace {
     int vertexList[] = new int[0];
+    UVCoordinate uv[] = new UVCoordinate[0];
     JacksVector normal = new JacksVector();
-    boolean smooth = false;
-    int r = 255;
-    int g = 255;
-    int b = 255;
-    int rS = 255;
-    int gS = 255;
-    int bS = 255;
-    float specular = 1;
-    int specularExponent = 3;
+    JacksMaterial material = new JacksMaterial();
     JacksGeometry parent;
     
     JacksFace(JacksGeometry parent) {
@@ -40,11 +31,32 @@ public class JacksFace {
         }
     }
     
+    void addUV(UVCoordinate newUV) {
+        uv = Arrays.copyOf(uv, uv.length + 1);
+        uv[uv.length - 1] = newUV;
+    }
+    
+    void setUV(UVCoordinate[] newUV) {
+        uv = Arrays.copyOf(newUV, newUV.length);
+    }
+    
     void calculateNormal() {
         normal = new JacksVector(parent.vertexList[vertexList[0]],
                 parent.vertexList[vertexList[1]]);
         normal.crossProduct(new JacksVector(parent.vertexList[vertexList[1]],
                 parent.vertexList[vertexList[2]]));
         normal.normalize();
+    }
+    
+    static class UVCoordinate {
+        float u, v;
+
+        public UVCoordinate() {
+        }
+
+        public UVCoordinate(float u, float v) {
+            this.u = u;
+            this.v = v;
+        }
     }
 }

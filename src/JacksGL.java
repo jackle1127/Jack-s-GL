@@ -13,9 +13,11 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -150,7 +152,7 @@ public class JacksGL extends javax.swing.JFrame {
                 applyLightControl();
             }
         };
-        
+
         spnLocX.addChangeListener(objectSpinnerListener);
         spnLocY.addChangeListener(objectSpinnerListener);
         spnLocZ.addChangeListener(objectSpinnerListener);
@@ -160,7 +162,7 @@ public class JacksGL extends javax.swing.JFrame {
         spnScaleX.addChangeListener(objectSpinnerListener);
         spnScaleY.addChangeListener(objectSpinnerListener);
         spnScaleZ.addChangeListener(objectSpinnerListener);
-        
+
         sldLightRed.addChangeListener(lightChangeListener);
         sldLightGreen.addChangeListener(lightChangeListener);
         sldLightBlue.addChangeListener(lightChangeListener);
@@ -293,6 +295,7 @@ public class JacksGL extends javax.swing.JFrame {
         jSlider2 = new javax.swing.JSlider();
         lblAmbientLight = new javax.swing.JLabel();
         lblCameraAngle = new javax.swing.JLabel();
+        jCheckBox4 = new javax.swing.JCheckBox();
         jLabel2 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
@@ -704,6 +707,14 @@ public class JacksGL extends javax.swing.JFrame {
         lblCameraAngle.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
         lblCameraAngle.setText("60");
 
+        jCheckBox4.setSelected(true);
+        jCheckBox4.setText("HDRI Background");
+        jCheckBox4.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox4ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -712,7 +723,6 @@ public class JacksGL extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(pnlObjectEdit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jCheckBox2)
                     .addComponent(jButton6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButton7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -720,10 +730,6 @@ public class JacksGL extends javax.swing.JFrame {
                     .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jCheckBox1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jCheckBox3))
                     .addComponent(jScrollPane2)
                     .addComponent(pnlLightEdit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
@@ -740,8 +746,16 @@ public class JacksGL extends javax.swing.JFrame {
                                 .addComponent(lblCameraAngle))
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                                 .addGap(10, 10, 10)
-                                .addComponent(lblAmbientLight)))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(lblAmbientLight))))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jCheckBox1)
+                            .addComponent(jCheckBox2))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jCheckBox4)
+                            .addComponent(jCheckBox3))))
+                .addContainerGap(25, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -751,7 +765,9 @@ public class JacksGL extends javax.swing.JFrame {
                     .addComponent(jCheckBox1)
                     .addComponent(jCheckBox3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jCheckBox2)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckBox2)
+                    .addComponent(jCheckBox4))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -988,35 +1004,115 @@ public class JacksGL extends javax.swing.JFrame {
                 public void run() {
                     long progress = 0;
                     JacksGeometry newObject = new JacksGeometry();
-
                     BufferedReader reader = null;
                     try {
                         reader = new BufferedReader(
                                 new FileReader(chooser.getSelectedFile()));
+                        String directory = chooser.getSelectedFile().getParent();
                         String line;
+                        ArrayList<JacksFace.UVCoordinate> uvList
+                                = new ArrayList<>();
+                        HashMap<String, JacksMaterial> materialMap
+                                = new HashMap<>();
+                        JacksMaterial currentMaterial = null;
                         while ((line = reader.readLine()) != null) {
                             progress += line.length() + 2;
                             jProgressBar1.setValue((int) (100 * progress / fileLength));
-                            if (line.startsWith("v ")) {
-                                float[] newVertex = new float[3];
+                            if (line.startsWith("mtllib ")) {
+                                String materialFileName = line.substring("mtllib ".length());
+                                File materialFile = new File(directory + File.separator + materialFileName);
+                                try {
+                                    BufferedReader materialReader
+                                            = new BufferedReader(
+                                                    new FileReader(materialFile));
+                                    String materialLine = "";
+                                    JacksMaterial readingMaterial = null;
+                                    while ((materialLine = materialReader.readLine()) != null) {
+                                        if (materialLine.startsWith("newmtl ")) {
+                                            if (readingMaterial != null) {
+                                                materialMap.put(readingMaterial.name,
+                                                        readingMaterial);
+                                            }
+                                            String materialName
+                                                    = materialLine.substring(
+                                                            "newmtl ".length());
+                                            readingMaterial = new JacksMaterial(materialName);
+                                        } else if (materialLine.startsWith("Ka ")) {
+                                            String[] att = materialLine.split("\\s+");
+                                            readingMaterial.rA = Float.parseFloat(att[1]);
+                                            readingMaterial.gA = Float.parseFloat(att[2]);
+                                            readingMaterial.bA = Float.parseFloat(att[3]);
+                                        } else if (materialLine.startsWith("Kd ")) {
+                                            String[] att = materialLine.split("\\s+");
+                                            readingMaterial.r = Float.parseFloat(att[1]);
+                                            readingMaterial.g = Float.parseFloat(att[2]);
+                                            readingMaterial.b = Float.parseFloat(att[3]);
+                                        } else if (materialLine.startsWith("Ks ")) {
+                                            String[] att = materialLine.split("\\s+");
+                                            readingMaterial.rS = Float.parseFloat(att[1]);
+                                            readingMaterial.gS = Float.parseFloat(att[2]);
+                                            readingMaterial.bS = Float.parseFloat(att[3]);
+                                        } else if (materialLine.startsWith("map_Kd ")) {
+                                            String texture
+                                                    = materialLine.substring(
+                                                            "map_Kd ".length()).trim();
+                                            if (!texture.isEmpty()) {
+                                                System.out.println(directory
+                                                        + File.separator + texture);
+                                                try {
+                                                readingMaterial.setTexture(
+                                                        ImageIO.read(new File(
+                                                                directory + File.separator + texture)));
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            } else if (line.startsWith("v ")) {
                                 String[] att = line.split("\\s+");
-                                newVertex[0] = Float.parseFloat(att[1]);
-                                newVertex[1] = Float.parseFloat(att[2]);
-                                newVertex[2] = Float.parseFloat(att[3]);
-                                newObject.addVertex(newVertex[0], newVertex[1], newVertex[2]);
+                                newObject.addVertex(Float.parseFloat(att[1]),
+                                        Float.parseFloat(att[2]), Float.parseFloat(att[3]));
+                            } else if (line.startsWith("vt ")) {
+                                String[] att = line.split("\\s+");
+                                uvList.add(new JacksFace.UVCoordinate(
+                                        Float.parseFloat(att[1]),
+                                        Float.parseFloat(att[2])));
+                            } else if (line.startsWith("usemtl ")) {
+                                currentMaterial = materialMap.get(
+                                        line.substring("usemtl ".length()));
                             } else if (line.startsWith("f ")) {
                                 String[] att = line.replaceAll("\\s+", " ").split(" ");
                                 int[] newFace = new int[att.length - 1];
+                                JacksFace.UVCoordinate[] newFaceTexture = null;
                                 for (int i = 0; i < att.length - 1; i++) {
                                     if (att[i + 1].contains("/")) {
-                                        att[i + 1]
-                                                = att[i + 1].substring(0, att[i + 1].indexOf("/"));
+                                        if (newFaceTexture == null) {
+                                            newFaceTexture = new JacksFace.UVCoordinate[att.length - 1];
+                                        }
+                                        String[] arguments = att[i + 1].split("/");
+                                        newFace[i] = Integer.parseInt(arguments[0]) - 1;
+                                        if (!arguments[1].isEmpty()) {
+                                            newFaceTexture[i] = uvList.get(
+                                                    Integer.parseInt(arguments[1]) - 1);
+                                        }
+                                    } else {
+                                        newFace[i] = Integer.parseInt(att[i + 1]) - 1;
                                     }
-                                    newFace[i] = Integer.parseInt(att[i + 1]) - 1;
                                 }
                                 JacksFace newJacksFace = newObject.addFace(newFace);
-                                newJacksFace.specularExponent = 16;
-                                newJacksFace.specular = .6f;
+                                if (newFaceTexture != null) {
+                                    newJacksFace.setUV(newFaceTexture);
+                                }
+                                if (currentMaterial != null) {
+                                    newJacksFace.material = currentMaterial;
+                                } else {
+                                    newJacksFace.material.specularExponent = 16;
+                                    newJacksFace.material.specular = .6f;
+                                }
                             }
                         }
 
@@ -1120,7 +1216,7 @@ public class JacksGL extends javax.swing.JFrame {
                 updateView();
                 break;
             case KeyEvent.VK_NUMPAD1:
-                yRot = - (float) Math.PI / 2;
+                yRot = -(float) Math.PI / 2;
                 xRot = 0;
                 updateView();
                 break;
@@ -1129,6 +1225,13 @@ public class JacksGL extends javax.swing.JFrame {
                 xRot = 0;
                 updateView();
                 break;
+            case KeyEvent.VK_DECIMAL:
+                if (glPanel.activeObject != null) {
+                    xPos = glPanel.activeObject.x;
+                    yPos = glPanel.activeObject.y;
+                    zPos = glPanel.activeObject.z;
+                    updateView();
+                }
         }
     }//GEN-LAST:event_glPanelKeyPressed
 
@@ -1154,8 +1257,8 @@ public class JacksGL extends javax.swing.JFrame {
 
     private void glPanelMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_glPanelMousePressed
         if (SwingUtilities.isLeftMouseButton(evt)) {
-            JacksObject selectedObject = 
-                    glPanel.selectOnScreen(new Point(evt.getX(), evt.getY()));
+            JacksObject selectedObject
+                    = glPanel.selectOnScreen(new Point(evt.getX(), evt.getY()));
             if (!shift) {
                 jList1.clearSelection();
                 glPanel.activeObject = selectedObject;
@@ -1202,6 +1305,10 @@ public class JacksGL extends javax.swing.JFrame {
         glPanel.cameraAngle = (float) (jSlider2.getValue() * Math.PI / 180);
         lblCameraAngle.setText(jSlider2.getValue() + "");
     }//GEN-LAST:event_jSlider2StateChanged
+
+    private void jCheckBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox4ActionPerformed
+        glPanel.hdriMode = jCheckBox4.isSelected();
+    }//GEN-LAST:event_jCheckBox4ActionPerformed
 
     float rotate(float number, float cap) {
         number %= cap;
@@ -1258,7 +1365,7 @@ public class JacksGL extends javax.swing.JFrame {
                 sldLightGreen.getValue(), sldLightBlue.getValue()));
         objectLock = false;
     }
-    
+
     void applyObjectControl() {
         if (!objectLock) {
             glPanel.activeObject.x = getFloatFromSpinner(spnLocX);
@@ -1277,7 +1384,7 @@ public class JacksGL extends javax.swing.JFrame {
         if (!objectLock) {
             JacksLight light = (JacksLight) glPanel.activeObject;
             pnlLightColor.setBackground(new Color(sldLightRed.getValue(),
-                sldLightGreen.getValue(), sldLightBlue.getValue()));
+                    sldLightGreen.getValue(), sldLightBlue.getValue()));
             light.energy = getFloatFromSpinner(spnEnergy);
             light.r = sldLightRed.getValue();
             light.g = sldLightGreen.getValue();
@@ -1367,6 +1474,7 @@ public class JacksGL extends javax.swing.JFrame {
     private javax.swing.JCheckBox jCheckBox1;
     private javax.swing.JCheckBox jCheckBox2;
     private javax.swing.JCheckBox jCheckBox3;
+    private javax.swing.JCheckBox jCheckBox4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;

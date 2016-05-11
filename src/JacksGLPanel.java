@@ -33,15 +33,18 @@ public class JacksGLPanel extends javax.swing.JPanel {
     boolean showLightSources = true;
     boolean showBackFace = false;
     boolean othogonal = false;
+    boolean hdriMode = true;
     float othogonalHeight = 10;
-    
+
     float cameraAngle = (float) Math.PI * 60.0f / 180.0f;
     float lowClipping = 0f;
     private BufferedImage rendered;
     private BufferedImage hdri;
+    private BufferedImage tempImage;
     private Raster renderedRaster;
     private byte[] renderedBytes;
     private byte[] hdriBytes;
+    private byte[] tempBytes;
     private Point[] locationMap;
     private JacksVertex projectedVertexMap[] = new JacksVertex[3];
 
@@ -62,6 +65,9 @@ public class JacksGLPanel extends javax.swing.JPanel {
     private float luminanceR;
     private float luminanceG;
     private float luminanceB;
+    private float luminanceRS;
+    private float luminanceGS;
+    private float luminanceBS;
     private float fromZ;
     private float toZ;
     private float fromX;
@@ -70,6 +76,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
     private int from;
     private int to;
     private int increment;
+    private float r, g, b;
     private Point point[] = new Point[3];
     private JacksVertex projectedVertex[] = new JacksVertex[3];
     private int order[] = new int[3];
@@ -126,6 +133,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
         hdriBytes = ((DataBufferByte) hdri.getData().getDataBuffer())
                 .getData();
         this.hdri = hdri;
+        resize();
     }
 
     void removeHdri() {
@@ -139,6 +147,14 @@ public class JacksGLPanel extends javax.swing.JPanel {
             depthBuffer = new float[panelHeight][panelWidth];
             rendered = new BufferedImage(panelWidth, panelHeight,
                     BufferedImage.TYPE_3BYTE_BGR);
+            tempImage = new BufferedImage(panelWidth, panelHeight,
+                    BufferedImage.TYPE_3BYTE_BGR);
+            if (hdri != null) {
+                tempImage.getGraphics().drawImage(hdri, 0, 0,
+                        tempImage.getWidth(), tempImage.getHeight(), null);
+                tempBytes = ((DataBufferByte) tempImage
+                        .getData().getDataBuffer()).getData();
+            }
             renderedBytes = ((DataBufferByte) rendered.getData().getDataBuffer())
                     .getData();
             renderedRaster = Raster.createRaster(rendered.getSampleModel(), new DataBufferByte(renderedBytes, renderedBytes.length), null);
@@ -152,9 +168,14 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 clearDepthBuffer();
                 cameraHeight = 2 * (float) Math.tan(cameraAngle / 2);
                 cameraWidth = cameraHeight * panelWidth / panelHeight;
-
                 if (hdri != null) {
-                    renderBackground();
+                    if (hdriMode) {
+                        renderBackground();
+                    } else {
+                        for (int i = 0; i < tempBytes.length; i++) {
+                            renderedBytes[i] = tempBytes[i];
+                        }
+                    }
                 } else {
                     Arrays.fill(renderedBytes, (byte) 0);
                 }
@@ -217,19 +238,22 @@ public class JacksGLPanel extends javax.swing.JPanel {
 
     float interpolateZbyX(float x1, float z1, float x2, float z2, int xS, int wS,
             float w) {
-        if (z1 - z2 < .0001 && z1 - z2 > -.0001) return z1;
-        return (x1 - z1 * (x2 - x1) / (z2 - z1)) /
-                ((.5f - (float) xS / (float) wS) * w
+        if (z1 - z2 < .0001 && z1 - z2 > -.0001) {
+            return z1;
+        }
+        return (x1 - z1 * (x2 - x1) / (z2 - z1))
+                / ((.5f - (float) xS / (float) wS) * w
                 - (x2 - x1) / (z2 - z1));
     }
-    
+
     float interpolateZbyY(float y1, float z1, float y2, float z2, int yS, int hS,
             float h) {
-        if (z1 - z2 < .0001 && z1 - z2 > -.0001) return z1;
-        return (z1 * (y2 - y1) / (z2 - z1) - y1) / (
-                (y2 - y1) / (z2 - z1) + ((.5f - (float) yS / (float) hS) * h));
+        if (z1 - z2 < .0001 && z1 - z2 > -.0001) {
+            return z1;
+        }
+        return (z1 * (y2 - y1) / (z2 - z1) - y1) / ((y2 - y1) / (z2 - z1) + ((.5f - (float) yS / (float) hS) * h));
     }
-    
+
     private void drawObject(JacksGeometry object, boolean alwaysOnTop) {
         tempOrigin.copyAttribute(origin);
         transformOrigin(tempOrigin, object);
@@ -258,6 +282,9 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 luminanceR = ambient;
                 luminanceG = ambient;
                 luminanceB = ambient;
+                luminanceRS = 0;
+                luminanceGS = 0;
+                luminanceBS = 0;
                 if (lightList.size() > 0) {
                     for (JacksLight light : lights) {
                         if (light.lightType == JacksLight.TYPE_POINT) {
@@ -287,12 +314,15 @@ public class JacksGLPanel extends javax.swing.JPanel {
                                 }
                                 if (luminanceS > 0) {
                                     tempFloat = luminanceS;
-                                    for (int i = 1; i <= face.specularExponent; i++) {
+                                    for (int i = 1; i <= face.material.specularExponent; i++) {
                                         luminanceS *= tempFloat;
                                     }
-                                    luminanceR += face.specular * (float) face.rS / 255.0f * luminanceS;
-                                    luminanceG += face.specular * (float) face.gS / 255.0f * luminanceS;
-                                    luminanceB += face.specular * (float) face.bS / 255.0f * luminanceS;
+                                    luminanceRS += face.material.specular
+                                            * face.material.rS * luminanceS;
+                                    luminanceGS += face.material.specular
+                                            * face.material.gS * luminanceS;
+                                    luminanceBS += face.material.specular
+                                            * face.material.bS * luminanceS;
                                 }
                             }
                         } else if (light.lightType == JacksLight.TYPE_DIRECTIONAL) {
@@ -315,12 +345,15 @@ public class JacksGLPanel extends javax.swing.JPanel {
                                 }
                                 if (luminanceS > 0) {
                                     tempFloat = luminanceS;
-                                    for (int i = 1; i <= face.specularExponent; i++) {
+                                    for (int i = 1; i <= face.material.specularExponent; i++) {
                                         luminanceS *= tempFloat;
                                     }
-                                    luminanceR += face.specular * (float) face.rS / 255.0f * luminanceS;
-                                    luminanceG += face.specular * (float) face.gS / 255.0f * luminanceS;
-                                    luminanceB += face.specular * (float) face.bS / 255.0f * luminanceS;
+                                    luminanceRS += face.material.specular
+                                            * face.material.rS * luminanceS;
+                                    luminanceGS += face.material.specular
+                                            * face.material.gS * luminanceS;
+                                    luminanceBS += face.material.specular
+                                            * face.material.bS * luminanceS;
                                 }
                             }
                         }
@@ -359,15 +392,13 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 }
                 for (int i = 0; i < face.vertexList.length; i += 2) {
                     // Rasterization
-                    point[0] = locationMap
-                            [face.vertexList[i] + currentVertexIndex];
+                    point[0] = locationMap[face.vertexList[i] + currentVertexIndex];
                     point[1] = locationMap[face.vertexList[(i + 1)
                             % face.vertexList.length] + currentVertexIndex];
                     point[2] = locationMap[face.vertexList[(i + 2)
                             % face.vertexList.length] + currentVertexIndex];
-                    
-                    projectedVertex[0] = projectedVertexMap
-                            [face.vertexList[i] + currentVertexIndex];
+
+                    projectedVertex[0] = projectedVertexMap[face.vertexList[i] + currentVertexIndex];
                     projectedVertex[1] = projectedVertexMap[face.vertexList[(i + 1)
                             % face.vertexList.length] + currentVertexIndex];
                     projectedVertex[2] = projectedVertexMap[face.vertexList[(i + 2)
@@ -414,7 +445,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
 
                     //First half
                     for (int y = point[order[0]].y; y <= point[order[2]].y; y++) {
-                        toZ = interpolateZbyY(projectedVertex[order[0]].y, 
+                        toZ = interpolateZbyY(projectedVertex[order[0]].y,
                                 projectedVertex[order[0]].z,
                                 projectedVertex[order[2]].y,
                                 projectedVertex[order[2]].z,
@@ -428,29 +459,29 @@ public class JacksGLPanel extends javax.swing.JPanel {
 
                         if (y < point[order[1]].y) {
                             // First half
-                            fromZ = interpolateZbyY(projectedVertex[order[0]].y, 
-                                projectedVertex[order[0]].z,
-                                projectedVertex[order[1]].y,
-                                projectedVertex[order[1]].z,
-                                y, panelHeight, cameraHeight);
+                            fromZ = interpolateZbyY(projectedVertex[order[0]].y,
+                                    projectedVertex[order[0]].z,
+                                    projectedVertex[order[1]].y,
+                                    projectedVertex[order[1]].z,
+                                    y, panelHeight, cameraHeight);
                             fromX = linear(projectedVertex[order[0]].z,
-                                projectedVertex[order[1]].z, fromZ,
-                                projectedVertex[order[0]].x,
-                                projectedVertex[order[1]].x);
+                                    projectedVertex[order[1]].z, fromZ,
+                                    projectedVertex[order[0]].x,
+                                    projectedVertex[order[1]].x);
                             from = (int) linear(point[order[0]].y,
                                     point[order[1]].y, y,
                                     point[order[0]].x, point[order[1]].x);
                         } else {
                             // Second half
-                            fromZ = interpolateZbyY(projectedVertex[order[1]].y, 
-                                projectedVertex[order[1]].z,
-                                projectedVertex[order[2]].y,
-                                projectedVertex[order[2]].z,
-                                y, panelHeight, cameraHeight);
+                            fromZ = interpolateZbyY(projectedVertex[order[1]].y,
+                                    projectedVertex[order[1]].z,
+                                    projectedVertex[order[2]].y,
+                                    projectedVertex[order[2]].z,
+                                    y, panelHeight, cameraHeight);
                             fromX = linear(projectedVertex[order[1]].z,
-                                projectedVertex[order[2]].z, fromZ,
-                                projectedVertex[order[1]].x,
-                                projectedVertex[order[2]].x);
+                                    projectedVertex[order[2]].z, fromZ,
+                                    projectedVertex[order[1]].x,
+                                    projectedVertex[order[2]].x);
                             from = (int) linear(point[order[1]].y,
                                     point[order[2]].y, y,
                                     point[order[1]].x, point[order[2]].x);
@@ -458,37 +489,50 @@ public class JacksGLPanel extends javax.swing.JPanel {
 //                        System.out.println(fromZ + " - " + toZ);
                         increment = from > to ? -1 : 1;
                         for (int x = from; x != to; x += increment) {
-                            if (x > 0 && x < rendered.getWidth()
-                                    && y > 0 && y < rendered.getHeight()) {
-                                currentDepth = interpolateZbyX(
-                                        fromX, fromZ, toX, toZ,
-                                        x, panelWidth, cameraWidth);
-//                                System.out.println(currentDepth);
-                                if (-currentDepth < depthBuffer[y][x] || alwaysOnTop) {
-                                    renderedBytes[(y * panelWidth + x) * 3]
-                                            = (byte) (luminanceB * 255);
-                                    renderedBytes[(y * panelWidth + x) * 3 + 1]
-                                            = (byte) (luminanceG * 255);
-                                    renderedBytes[(y * panelWidth + x) * 3 + 2]
-                                            = (byte) (luminanceR * 255);
-                                    depthBuffer[y][x] = -currentDepth;
-                                }
-                            }
+                            drawPixel(face, x, y, alwaysOnTop);
                         }
-                        if (to > 0 && to < rendered.getWidth()
-                                && y > 0 && y < rendered.getHeight()) {
-                            if (-toZ < depthBuffer[y][to] || alwaysOnTop) {
-                                renderedBytes[(y * panelWidth + to) * 3]
-                                        = (byte) (luminanceB * 255);
-                                renderedBytes[(y * panelWidth + to) * 3 + 1]
-                                        = (byte) (luminanceG * 255);
-                                renderedBytes[(y * panelWidth + to) * 3 + 2]
-                                        = (byte) (luminanceR * 255);
-                                depthBuffer[y][to] = -toZ;
-                            }
-                        }
+                        drawPixel(face, to, y, alwaysOnTop);
                     }
                 }
+            }
+        }
+    }
+
+    private void drawPixel(JacksFace face, int x, int y, boolean alwaysOnTop) {
+        if (x > 0 && x < rendered.getWidth()
+                && y > 0 && y < rendered.getHeight()) {
+            currentDepth = interpolateZbyX(
+                    fromX, fromZ, toX, toZ,
+                    x, panelWidth, cameraWidth);
+            if (-currentDepth > 0 && -currentDepth < depthBuffer[y][x] || alwaysOnTop) {
+                if (face.material.texture == null) {
+                    r = face.material.r;
+                    g = face.material.g;
+                    b = face.material.b;
+                } else {
+                    r = 1;
+                    g = 0;
+                    b = 1;
+                }
+                r = r * luminanceR + luminanceRS;
+                g = g * luminanceG + luminanceGS;
+                b = b * luminanceB + luminanceBS;
+                if (r > 1) {
+                    r = 1;
+                }
+                if (g > 1) {
+                    g = 1;
+                }
+                if (b > 1) {
+                    b = 1;
+                }
+                renderedBytes[(y * panelWidth + x) * 3]
+                        = (byte) (b * 255);
+                renderedBytes[(y * panelWidth + x) * 3 + 1]
+                        = (byte) (g * 255);
+                renderedBytes[(y * panelWidth + x) * 3 + 2]
+                        = (byte) (r * 255);
+                depthBuffer[y][x] = -currentDepth;
             }
         }
     }
@@ -738,10 +782,11 @@ public class JacksGLPanel extends javax.swing.JPanel {
     }
 
     private float linear(float startProgress, float endProgress, float progress, float start, float end) {
-        return startProgress == endProgress
-                ? start
-                : start + (end - start) * (progress - startProgress)
-                / (endProgress - startProgress);
+        return startProgress - endProgress > -.0001
+                && startProgress - endProgress < .0001
+                        ? start
+                        : start + (end - start) * (progress - startProgress)
+                        / (endProgress - startProgress);
     }
 
     private float linear(int startProgress, int endProgress, int progress, int start, int end) {
@@ -750,7 +795,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 : start + (end - start) * (progress - startProgress)
                 / (endProgress - startProgress);
     }
-    
+
     private int getRGBByVector(JacksVector vector) {
         int hdriWidth = hdri.getWidth();
         int hdriHeight = hdri.getHeight();
@@ -787,10 +832,10 @@ public class JacksGLPanel extends javax.swing.JPanel {
         }
         int intersections = 0;
         for (int i = 0; i < planePoints.length; i++) {
-            if (point.y >= planePoints[i].y &&
-                    point.y <= planePoints[(i + 1) % planePoints.length].y
-                    || point.y <= planePoints[i].y &&
-                    point.y >= planePoints[(i + 1) % planePoints.length].y) {
+            if (point.y >= planePoints[i].y
+                    && point.y <= planePoints[(i + 1) % planePoints.length].y
+                    || point.y <= planePoints[i].y
+                    && point.y >= planePoints[(i + 1) % planePoints.length].y) {
                 if (linear(planePoints[i].y,
                         planePoints[(i + 1) % planePoints.length].y,
                         point.y, planePoints[i].x,
@@ -799,15 +844,18 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 }
             }
         }
-        if (intersections == 1) return true;
-        else return false;
+        if (intersections == 1) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     JacksObject selectOnScreen(Point mouseLocation) {
         for (JacksLight light : lightList) {
             JacksOrigin tempOrigin = origin.clone();
             transformOrigin(tempOrigin, light);
-            
+
             Point lightLocation = xyzToOnScreenXY(tempOrigin.translate.x,
                     tempOrigin.translate.y, tempOrigin.translate.z);
             if ((lightLocation.x - mouseLocation.x)
