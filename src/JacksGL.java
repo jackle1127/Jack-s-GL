@@ -206,19 +206,19 @@ public class JacksGL extends javax.swing.JFrame {
         cube.addFace(0, 3, 7, 4);
         cube.addFace(1, 5, 6, 2);
         cube.addFace(4, 7, 6, 5);
-        glPanel.addGeometry(cube);
+//        glPanel.addGeometry(cube);
         JacksGeometry clone = cube.clone();
         clone.x = .2f;
         clone.y = .2f;
         clone.z = .2f;
-        glPanel.addGeometry(clone);
-        glPanel.addLight(new JacksLight(0, 2, 128, 255, 0,
-                1.5f, -.8f, 1.5f, true));
-        glPanel.addLight(new JacksLight(0, 2, 255, 0, 128,
-                -1.5f, -.8f, 1.5f, true));
-        JacksLight sun = new JacksLight(1, .5f, 128, 128, 255,
-                0, 0, 0, true);
-        glPanel.addLight(sun);
+//        glPanel.addGeometry(clone);
+//        glPanel.addLight(new JacksLight(0, 2, 128, 255, 0,
+//                1.5f, -.8f, 1.5f, true));
+//        glPanel.addLight(new JacksLight(0, 2, 255, 0, 128,
+//                -1.5f, -.8f, 1.5f, true));
+//        JacksLight sun = new JacksLight(1, .5f, 128, 128, 255,
+//                0, 0, 0, true);
+//        glPanel.addLight(sun);
         updateView();
         glPanel.startUpdating();
         timer.start();
@@ -1068,6 +1068,10 @@ public class JacksGL extends javax.swing.JFrame {
                                                 }
                                             }
                                         }
+                                    }
+                                    if (readingMaterial != null) {
+                                        materialMap.put(readingMaterial.name,
+                                                readingMaterial);
                                     }
                                 } catch (Exception e) {
                                     e.printStackTrace();

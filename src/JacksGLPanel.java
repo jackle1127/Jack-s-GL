@@ -14,6 +14,7 @@ import java.util.LinkedList;
 
 public class JacksGLPanel extends javax.swing.JPanel {
 
+    private final float INTERPOLATION_CLAMP = .0001f;
     int lightOnScreenSize = 20;
     int numberOfThreads = 4;
     float deltaTime = 0;
@@ -72,13 +73,21 @@ public class JacksGLPanel extends javax.swing.JPanel {
     private float toZ;
     private float fromX;
     private float toX;
-    private float currentDepth;
-    private int from;
-    private int to;
+    private float fromU;
+    private float toU;
+    private float fromV;
+    private float toV;
+    private float tempU;
+    private float tempV;
+    private float alpha;
+    private float currentZ;
+    private int fromXOnScreen;
+    private int toXOnScreen;
     private int increment;
     private float r, g, b;
     private Point point[] = new Point[3];
     private JacksVertex projectedVertex[] = new JacksVertex[3];
+    private JacksFace.UVCoordinate uv[] = new JacksFace.UVCoordinate[3];
     private int order[] = new int[3];
     private int temp;
     private JacksLight lights[];
@@ -92,7 +101,9 @@ public class JacksGLPanel extends javax.swing.JPanel {
     private float lightDistance;
     private int panelWidth;
     private int panelHeight;
-
+    private long startTime;
+    private long stopTime;
+    
     float cameraHeight;
     float cameraWidth;
     JacksOrigin tempOrigin = new JacksOrigin();
@@ -162,7 +173,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
     }
 
     long update() {
-        long startTime = System.nanoTime();
+        startTime = System.nanoTime();
         if (rendered != null && renderedBytes != null) {
             try {
                 clearDepthBuffer();
@@ -232,13 +243,14 @@ public class JacksGLPanel extends javax.swing.JPanel {
             }
         }
 
-        long stopTime = System.nanoTime();
+        stopTime = System.nanoTime();
         return stopTime - startTime;
     }
 
     float interpolateZbyX(float x1, float z1, float x2, float z2, int xS, int wS,
             float w) {
-        if (z1 - z2 < .0001 && z1 - z2 > -.0001) {
+        if (testDifference(z1, z2)) {
+//            System.out.println("boop " + z1 + " - " + System.currentTimeMillis());
             return z1;
         }
         return (x1 - z1 * (x2 - x1) / (z2 - z1))
@@ -248,7 +260,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
 
     float interpolateZbyY(float y1, float z1, float y2, float z2, int yS, int hS,
             float h) {
-        if (z1 - z2 < .0001 && z1 - z2 > -.0001) {
+        if (testDifference(z1, z2)) {
             return z1;
         }
         return (z1 * (y2 - y1) / (z2 - z1) - y1) / ((y2 - y1) / (z2 - z1) + ((.5f - (float) yS / (float) hS) * h));
@@ -259,6 +271,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
         transformOrigin(tempOrigin, object);
 
         for (JacksFace face : object.faceList) {
+            if (System.currentTimeMillis() - startTime > 1000) break;
             if (face.vertexList.length >= 3) {
                 center.setXYZ(0, 0, 0);
                 normal.copyXYZ(face.normal);
@@ -403,6 +416,15 @@ public class JacksGLPanel extends javax.swing.JPanel {
                             % face.vertexList.length] + currentVertexIndex];
                     projectedVertex[2] = projectedVertexMap[face.vertexList[(i + 2)
                             % face.vertexList.length] + currentVertexIndex];
+
+                    if (face.uv.length > 0) {
+                        uv[0] = face.uv[i];
+                        uv[1] = face.uv[(i + 1)
+                                % face.uv.length];
+                        uv[2] = face.uv[(i + 2)
+                                % face.uv.length];
+                    }
+
                     // If the face is flat (no area)
                     if (point[0].y == point[1].y && point[1].y == point[2].y) {
                         continue;
@@ -445,30 +467,62 @@ public class JacksGLPanel extends javax.swing.JPanel {
 
                     //First half
                     for (int y = point[order[0]].y; y <= point[order[2]].y; y++) {
+                        if (System.currentTimeMillis() - startTime > 1000) break;
                         toZ = interpolateZbyY(projectedVertex[order[0]].y,
                                 projectedVertex[order[0]].z,
                                 projectedVertex[order[2]].y,
                                 projectedVertex[order[2]].z,
                                 y, panelHeight, cameraHeight);
-                        to = (int) linear(point[order[0]].y, point[order[2]].y,
+                        toXOnScreen = (int) linear(point[order[0]].y, point[order[2]].y,
                                 y, point[order[0]].x, point[order[2]].x);
-                        toX = linear(projectedVertex[order[0]].z,
-                                projectedVertex[order[2]].z, toZ,
-                                projectedVertex[order[0]].x,
+                        if (!testDifference(projectedVertex[order[0]].z,
+                                projectedVertex[order[2]].z)) {
+                            alpha = (toZ - projectedVertex[order[0]].z)
+                                    / (projectedVertex[order[2]].z
+                                    - projectedVertex[order[0]].z);
+                        } else {
+                            alpha = point[order[0]].y == point[order[2]].y
+                                    ? 1
+                                    : (float) (y - point[order[0]].y)
+                                    / (float) (point[order[2]].y
+                                    - point[order[0]].y);
+                        }
+                        toX = linear(alpha, projectedVertex[order[0]].x,
                                 projectedVertex[order[2]].x);
-
-                        if (y < point[order[1]].y) {
+                        if (face.uv.length > 0 && uv[0] != null) {
+                            toU = linear(alpha, uv[order[0]].u, uv[order[2]].u);
+                            toV = linear(alpha, uv[order[0]].v, uv[order[2]].v);
+                        }
+                        if (y <= point[order[1]].y) {
                             // First half
                             fromZ = interpolateZbyY(projectedVertex[order[0]].y,
                                     projectedVertex[order[0]].z,
                                     projectedVertex[order[1]].y,
                                     projectedVertex[order[1]].z,
                                     y, panelHeight, cameraHeight);
-                            fromX = linear(projectedVertex[order[0]].z,
-                                    projectedVertex[order[1]].z, fromZ,
-                                    projectedVertex[order[0]].x,
+
+                            if (!testDifference(projectedVertex[order[0]].z,
+                                    projectedVertex[order[1]].z)) {
+                                alpha = (fromZ - projectedVertex[order[0]].z)
+                                        / (projectedVertex[order[1]].z
+                                        - projectedVertex[order[0]].z);
+                            } else {
+                                alpha = point[order[0]].y == point[order[1]].y
+                                        ? 0
+                                        : (float) (y - point[order[0]].y)
+                                        / (float) (point[order[1]].y
+                                        - point[order[0]].y);
+                            }
+
+                            fromX = linear(alpha, projectedVertex[order[0]].x,
                                     projectedVertex[order[1]].x);
-                            from = (int) linear(point[order[0]].y,
+                            if (face.uv.length > 0 && uv[0] != null) {
+                                fromU = linear(alpha, uv[order[0]].u,
+                                        uv[order[1]].u);
+                                fromV = linear(alpha, uv[order[0]].v,
+                                        uv[order[1]].v);
+                            }
+                            fromXOnScreen = (int) linear(point[order[0]].y,
                                     point[order[1]].y, y,
                                     point[order[0]].x, point[order[1]].x);
                         } else {
@@ -478,45 +532,81 @@ public class JacksGLPanel extends javax.swing.JPanel {
                                     projectedVertex[order[2]].y,
                                     projectedVertex[order[2]].z,
                                     y, panelHeight, cameraHeight);
-                            fromX = linear(projectedVertex[order[1]].z,
-                                    projectedVertex[order[2]].z, fromZ,
-                                    projectedVertex[order[1]].x,
+
+                            if (!testDifference(projectedVertex[order[1]].z
+                                    , projectedVertex[order[2]].z)) {
+                                alpha = (fromZ - projectedVertex[order[1]].z)
+                                        / (projectedVertex[order[2]].z
+                                        - projectedVertex[order[1]].z);
+                            } else {
+                                alpha = point[order[1]].y == point[order[2]].y
+                                        ? 0
+                                        : (float) (y - point[order[1]].y)
+                                        / (float) (point[order[2]].y
+                                        - point[order[1]].y);
+                            }
+
+                            fromX = linear(alpha, projectedVertex[order[1]].x,
                                     projectedVertex[order[2]].x);
-                            from = (int) linear(point[order[1]].y,
+                            if (face.uv.length > 0 && uv[0] != null) {
+                                fromU = linear(alpha, uv[order[1]].u,
+                                        uv[order[2]].u);
+                                fromV = linear(alpha, uv[order[1]].v,
+                                        uv[order[2]].v);
+                            }
+
+                            fromXOnScreen = (int) linear(point[order[1]].y,
                                     point[order[2]].y, y,
                                     point[order[1]].x, point[order[2]].x);
                         }
 //                        System.out.println(fromZ + " - " + toZ);
-                        increment = from > to ? -1 : 1;
-                        for (int x = from; x != to; x += increment) {
-                            drawPixel(face, x, y, alwaysOnTop);
+                        increment = fromXOnScreen > toXOnScreen ? -1 : 1;
+                        for (int x = fromXOnScreen; x != toXOnScreen; x += increment) {
+                            if (System.currentTimeMillis() - startTime > 1000) break;
+                            drawPixel(face, x, y, i, alwaysOnTop);
                         }
-                        drawPixel(face, to, y, alwaysOnTop);
+                        drawPixel(face, toXOnScreen, y, i, alwaysOnTop);
                     }
                 }
             }
         }
     }
 
-    private void drawPixel(JacksFace face, int x, int y, boolean alwaysOnTop) {
+    private void drawPixel(JacksFace face, int x, int y, int i, boolean alwaysOnTop) {
         if (x > 0 && x < rendered.getWidth()
                 && y > 0 && y < rendered.getHeight()) {
-            currentDepth = interpolateZbyX(
+            currentZ = interpolateZbyX(
                     fromX, fromZ, toX, toZ,
                     x, panelWidth, cameraWidth);
-            if (-currentDepth > 0 && -currentDepth < depthBuffer[y][x] || alwaysOnTop) {
+            if (-currentZ > 0 && -currentZ < depthBuffer[y][x] || alwaysOnTop) {
                 if (face.material.texture == null) {
                     r = face.material.r;
                     g = face.material.g;
                     b = face.material.b;
                 } else {
-                    r = 1;
-                    g = 0;
-                    b = 1;
+                    if (!testDifference(fromZ, toZ)) {
+                        alpha = (currentZ - fromZ) / (toZ - fromZ);
+                    } else {
+                        alpha = fromXOnScreen == toXOnScreen
+                                ? 0
+                                : (float) (x - fromXOnScreen)
+                                / (float) (toXOnScreen - fromXOnScreen);
+                    }
+                    tempU = linear(alpha, fromU, toU);
+                    tempV = linear(alpha, fromV, toV);
+                    r = face.material.getR(tempU, tempV);
+                    g = face.material.getG(tempU, tempV);
+                    b = face.material.getB(tempU, tempV);
+//                    System.out.println(r + ", " + g + ", " + b);
                 }
-                r = r * luminanceR + luminanceRS;
-                g = g * luminanceG + luminanceGS;
-                b = b * luminanceB + luminanceBS;
+                r = r * luminanceR;
+                g = g * luminanceG;
+                b = b * luminanceB;
+                if (luminanceRS > 0) {
+                    r += luminanceRS;
+                    g += luminanceGS;
+                    b += luminanceBS;
+                }
                 if (r > 1) {
                     r = 1;
                 }
@@ -532,9 +622,14 @@ public class JacksGLPanel extends javax.swing.JPanel {
                         = (byte) (g * 255);
                 renderedBytes[(y * panelWidth + x) * 3 + 2]
                         = (byte) (r * 255);
-                depthBuffer[y][x] = -currentDepth;
+                depthBuffer[y][x] = -currentZ;
             }
         }
+    }
+
+    private boolean testDifference(float n1, float n2) {
+        return n1 - n2 > -INTERPOLATION_CLAMP
+                && n1 - n2 < INTERPOLATION_CLAMP;
     }
 
     private void transformOrigin(JacksOrigin origin, JacksObject object) {
@@ -782,11 +877,14 @@ public class JacksGLPanel extends javax.swing.JPanel {
     }
 
     private float linear(float startProgress, float endProgress, float progress, float start, float end) {
-        return startProgress - endProgress > -.0001
-                && startProgress - endProgress < .0001
-                        ? start
-                        : start + (end - start) * (progress - startProgress)
-                        / (endProgress - startProgress);
+        return testDifference(startProgress, endProgress)
+                ? start
+                : start + (end - start) * (progress - startProgress)
+                / (endProgress - startProgress);
+    }
+
+    private float linear(float alpha, float start, float end) {
+        return start + (end - start) * alpha;
     }
 
     private float linear(int startProgress, int endProgress, int progress, int start, int end) {

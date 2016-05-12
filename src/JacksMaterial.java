@@ -14,6 +14,8 @@ public class JacksMaterial {
     float bA = 0;
     float specular = 1;
     int specularExponent = 3;
+    private int width = 0;
+    private int height = 0;
     byte[] texture;
     String name = "unnamed";
 
@@ -41,6 +43,8 @@ public class JacksMaterial {
         BufferedImage temp = new BufferedImage(texture.getWidth(),
                 texture.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         temp.getGraphics().drawImage(texture, 0, 0, null);
+        width = texture.getWidth();
+        height = texture.getHeight();
         this.texture = ((DataBufferByte) temp.getData().getDataBuffer()).getData();
         this.specular = specular;
         this.specularExponent = specularExponent;
@@ -50,6 +54,37 @@ public class JacksMaterial {
         BufferedImage temp = new BufferedImage(texture.getWidth(),
                 texture.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         temp.getGraphics().drawImage(texture, 0, 0, null);
+        width = texture.getWidth();
+        height = texture.getHeight();
         this.texture = ((DataBufferByte) temp.getData().getDataBuffer()).getData();
+    }
+    
+    float getB(float x, float y) {
+//        System.out.println(x + ", " + y);
+        return byteToFloat(texture[(rotateNumber((int)((1 - y) * (height)), height) * width
+                + rotateNumber((int)(x * (width)), width)) * 3]) / 255.0f;
+    }
+    
+    float getG(float x, float y) {
+        return byteToFloat(texture[(rotateNumber((int)((1 - y) * (height)), height) * width
+                + rotateNumber((int)(x * (width)), width)) * 3 + 1]) / 255.0f;
+    }
+    
+    float getR(float x, float y) {
+        return byteToFloat(texture[(rotateNumber((int)((1 - y) * (height)), height) * width
+                + rotateNumber((int)(x * (width)), width)) * 3 + 2]) / 255.0f;
+    }
+    
+    float byteToFloat(byte number) {
+        return number >= 0
+                ? number
+                : number + 256;
+    }
+    private int rotateNumber(int x, int max) {
+        x = x % max;
+        if (x < 0) {
+            x = max + x;
+        }
+        return x;
     }
 }
