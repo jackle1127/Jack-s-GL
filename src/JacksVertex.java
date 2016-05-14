@@ -4,6 +4,7 @@ public class JacksVertex {
     float x, y, z;
     private float tempX;
     private float tempY;
+    JacksVector normal = new JacksVector();
     
     JacksVertex() {
         x = 0;
@@ -38,9 +39,12 @@ public class JacksVertex {
                 + z * origin.z.z;
         x = tempX;
         y = tempY;
+        normal.project(origin);
     }
     
     protected JacksVertex clone() {
-        return new JacksVertex(x, y, z);
+        JacksVertex result = new JacksVertex(x, y, z);
+        result.normal = normal.clone();
+        return result;
     }
 }

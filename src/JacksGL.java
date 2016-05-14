@@ -52,7 +52,9 @@ public class JacksGL extends javax.swing.JFrame {
     boolean shift = false;
     boolean alt = false;
     boolean objectLock = true;
+    boolean objectListLock = false;
     Robot robot;
+    LinkedList<JacksObject> clipboard = new LinkedList<>();
 
     JFileChooser chooser = new JFileChooser();
 
@@ -66,7 +68,7 @@ public class JacksGL extends javax.swing.JFrame {
 
     public JacksGL() {
         try {
-            this.robot = new Robot();
+            robot = new Robot();
         } catch (AWTException ex) {
             Logger.getLogger(JacksGL.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -190,8 +192,8 @@ public class JacksGL extends javax.swing.JFrame {
         lblScaleZ.addMouseListener(spinnerMouseInput);
         lblEnergy.addMouseListener(spinnerMouseInput);
 
-        this.setExtendedState(MAXIMIZED_BOTH);
-        JacksGeometry cube = new JacksGeometry();
+//        this.setExtendedState(MAXIMIZED_BOTH);
+        JacksGeometry cube = new JacksGeometry("Doodster");
         cube.addVertex(1, 1, 1);
         cube.addVertex(1, 1, -1);
         cube.addVertex(-1, 1, -1);
@@ -253,8 +255,6 @@ public class JacksGL extends javax.swing.JFrame {
         jSlider1 = new javax.swing.JSlider();
         jLabel1 = new javax.swing.JLabel();
         jButton7 = new javax.swing.JButton();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
         jCheckBox2 = new javax.swing.JCheckBox();
         pnlObjectEdit = new javax.swing.JPanel();
         spnLocX = new javax.swing.JSpinner();
@@ -296,6 +296,17 @@ public class JacksGL extends javax.swing.JFrame {
         lblAmbientLight = new javax.swing.JLabel();
         lblCameraAngle = new javax.swing.JLabel();
         jCheckBox4 = new javax.swing.JCheckBox();
+        jCheckBox5 = new javax.swing.JCheckBox();
+        jCheckBox6 = new javax.swing.JCheckBox();
+        jCheckBox7 = new javax.swing.JCheckBox();
+        jCheckBox8 = new javax.swing.JCheckBox();
+        jScrollPane3 = new javax.swing.JScrollPane();
+        jList1 = new javax.swing.JList<>(new DefaultListModel());
+        jCheckBox9 = new javax.swing.JCheckBox();
+        spnWidth = new javax.swing.JSpinner();
+        jLabel7 = new javax.swing.JLabel();
+        spnHeight = new javax.swing.JSpinner();
+        jCheckBox10 = new javax.swing.JCheckBox();
         jLabel2 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
@@ -303,6 +314,8 @@ public class JacksGL extends javax.swing.JFrame {
         jMenu2 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
+        jMenuItem1 = new javax.swing.JMenuItem();
+        jMenuItem6 = new javax.swing.JMenuItem();
 
         jMenuItem4.setText("jMenuItem4");
 
@@ -422,15 +435,6 @@ public class JacksGL extends javax.swing.JFrame {
                 jButton7ActionPerformed(evt);
             }
         });
-
-        jList1.setModel(new DefaultListModel());
-        jList1.setPreferredSize(new java.awt.Dimension(264, 0));
-        jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
-            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
-                jList1ValueChanged(evt);
-            }
-        });
-        jScrollPane2.setViewportView(jList1);
 
         jCheckBox2.setText("Show back faces");
         jCheckBox2.addActionListener(new java.awt.event.ActionListener() {
@@ -715,47 +719,131 @@ public class JacksGL extends javax.swing.JFrame {
             }
         });
 
+        jCheckBox5.setSelected(true);
+        jCheckBox5.setText("Smooth");
+        jCheckBox5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox5ActionPerformed(evt);
+            }
+        });
+
+        jCheckBox6.setText("Force Smooth");
+        jCheckBox6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox6ActionPerformed(evt);
+            }
+        });
+
+        jCheckBox7.setSelected(true);
+        jCheckBox7.setText("Texture");
+        jCheckBox7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox7ActionPerformed(evt);
+            }
+        });
+
+        jCheckBox8.setText("Free look");
+        jCheckBox8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox8ActionPerformed(evt);
+            }
+        });
+
+        jList1.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                jList1ValueChanged(evt);
+            }
+        });
+        jScrollPane3.setViewportView(jList1);
+
+        jCheckBox9.setText("Force Resolution");
+        jCheckBox9.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox9ActionPerformed(evt);
+            }
+        });
+
+        spnWidth.setModel(new javax.swing.SpinnerNumberModel(1366, 100, 3840, 1));
+        spnWidth.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                spnWidthStateChanged(evt);
+            }
+        });
+
+        jLabel7.setText("x");
+
+        spnHeight.setModel(new javax.swing.SpinnerNumberModel(768, 100, 2160, 1));
+        spnHeight.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                spnHeightStateChanged(evt);
+            }
+        });
+
+        jCheckBox10.setText("Show Normal");
+        jCheckBox10.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jCheckBox10ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(pnlObjectEdit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2)
-                    .addComponent(pnlLightEdit, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel6)
-                            .addComponent(jLabel1))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                            .addComponent(jSlider2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 182, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGap(4, 4, 4)
-                                .addComponent(lblCameraAngle))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                                .addGap(10, 10, 10)
-                                .addComponent(lblAmbientLight))))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jCheckBox1)
-                            .addComponent(jCheckBox2))
+                        .addComponent(jCheckBox9)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jCheckBox4)
-                            .addComponent(jCheckBox3))))
-                .addContainerGap(25, Short.MAX_VALUE))
+                        .addComponent(spnWidth, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(spnHeight, javax.swing.GroupLayout.PREFERRED_SIZE, 64, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
+                            .addComponent(jCheckBox8)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(jCheckBox10))
+                        .addComponent(pnlObjectEdit, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton6, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton7, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(pnlLightEdit, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(jPanel2Layout.createSequentialGroup()
+                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel6)
+                                .addComponent(jLabel1))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jSlider1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                                .addComponent(jSlider2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 182, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGap(4, 4, 4)
+                            .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(lblCameraAngle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(lblAmbientLight, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel2Layout.createSequentialGroup()
+                                .addComponent(jCheckBox7)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jCheckBox5)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jCheckBox6))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jCheckBox1)
+                                    .addComponent(jCheckBox2))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jCheckBox4)
+                                    .addComponent(jCheckBox3))))
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.LEADING)))
+                .addContainerGap(31, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -768,6 +856,21 @@ public class JacksGL extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jCheckBox2)
                     .addComponent(jCheckBox4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckBox5)
+                    .addComponent(jCheckBox6)
+                    .addComponent(jCheckBox7))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckBox8)
+                    .addComponent(jCheckBox10))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jCheckBox9)
+                    .addComponent(spnWidth, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel7)
+                    .addComponent(spnHeight, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -791,15 +894,15 @@ public class JacksGL extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                         .addComponent(jSlider2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(lblCameraAngle, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 109, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlObjectEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlLightEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(34, Short.MAX_VALUE))
+                .addContainerGap(25, Short.MAX_VALUE))
         );
 
         jScrollPane1.setViewportView(jPanel2);
@@ -837,6 +940,24 @@ public class JacksGL extends javax.swing.JFrame {
             }
         });
         jMenu2.add(jMenuItem5);
+
+        jMenuItem1.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem1.setText("Copy");
+        jMenuItem1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem1ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem1);
+
+        jMenuItem6.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_V, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem6.setText("Paste");
+        jMenuItem6.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem6ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem6);
 
         jMenuBar1.add(jMenu2);
 
@@ -1003,8 +1124,10 @@ public class JacksGL extends javax.swing.JFrame {
                 @Override
                 public void run() {
                     long progress = 0;
-                    JacksGeometry newObject = new JacksGeometry();
+                    JacksGeometry newObject = new JacksGeometry(null);
                     BufferedReader reader = null;
+                    boolean smoothMode = false;
+                    boolean vertexNormalSpecified = false;
                     try {
                         reader = new BufferedReader(
                                 new FileReader(chooser.getSelectedFile()));
@@ -1015,6 +1138,7 @@ public class JacksGL extends javax.swing.JFrame {
                         HashMap<String, JacksMaterial> materialMap
                                 = new HashMap<>();
                         JacksMaterial currentMaterial = null;
+                        int currentVertex = 0;
                         while ((line = reader.readLine()) != null) {
                             progress += line.length() + 2;
                             jProgressBar1.setValue((int) (100 * progress / fileLength));
@@ -1052,6 +1176,12 @@ public class JacksGL extends javax.swing.JFrame {
                                             readingMaterial.rS = Float.parseFloat(att[1]);
                                             readingMaterial.gS = Float.parseFloat(att[2]);
                                             readingMaterial.bS = Float.parseFloat(att[3]);
+                                        } else if (materialLine.startsWith("d ")) {
+                                            String[] att = materialLine.split("\\s+");
+                                            readingMaterial.a = Float.parseFloat(att[1]);
+                                        } else if (materialLine.startsWith("Tr ")) {
+                                            String[] att = materialLine.split("\\s+");
+                                            readingMaterial.a = 1 - Float.parseFloat(att[1]);
                                         } else if (materialLine.startsWith("map_Kd ")) {
                                             String texture
                                                     = materialLine.substring(
@@ -1060,9 +1190,9 @@ public class JacksGL extends javax.swing.JFrame {
                                                 System.out.println(directory
                                                         + File.separator + texture);
                                                 try {
-                                                readingMaterial.setTexture(
-                                                        ImageIO.read(new File(
-                                                                directory + File.separator + texture)));
+                                                    readingMaterial.setTexture(
+                                                            ImageIO.read(new File(
+                                                                    directory + File.separator + texture)));
                                                 } catch (Exception e) {
                                                     e.printStackTrace();
                                                 }
@@ -1079,12 +1209,22 @@ public class JacksGL extends javax.swing.JFrame {
                             } else if (line.startsWith("v ")) {
                                 String[] att = line.split("\\s+");
                                 newObject.addVertex(Float.parseFloat(att[1]),
-                                        Float.parseFloat(att[2]), Float.parseFloat(att[3]));
+                                        Float.parseFloat(att[2]),
+                                        Float.parseFloat(att[3]));
                             } else if (line.startsWith("vt ")) {
                                 String[] att = line.split("\\s+");
                                 uvList.add(new JacksFace.UVCoordinate(
                                         Float.parseFloat(att[1]),
                                         Float.parseFloat(att[2])));
+                            } else if (line.startsWith("vn ")) {
+//                                String[] att = line.split("\\s+");
+//                                newObject.vertexList[currentVertex].normal
+//                                        .setXYZ(Float.parseFloat(att[1]),
+//                                                Float.parseFloat(att[2]),
+//                                                Float.parseFloat(att[3]));
+//                                vertexNormalSpecified = true;
+                            } else if (line.startsWith("s ")) {
+                                smoothMode = line.trim().equals("s 1");
                             } else if (line.startsWith("usemtl ")) {
                                 currentMaterial = materialMap.get(
                                         line.substring("usemtl ".length()));
@@ -1108,15 +1248,16 @@ public class JacksGL extends javax.swing.JFrame {
                                     }
                                 }
                                 JacksFace newJacksFace = newObject.addFace(newFace);
+                                newJacksFace.smooth = smoothMode;
                                 if (newFaceTexture != null) {
                                     newJacksFace.setUV(newFaceTexture);
                                 }
                                 if (currentMaterial != null) {
                                     newJacksFace.material = currentMaterial;
                                 } else {
-                                    newJacksFace.material.specularExponent = 16;
                                     newJacksFace.material.specular = .6f;
                                 }
+                                newJacksFace.material.specularExponent = 64;
                             }
                         }
 
@@ -1131,9 +1272,26 @@ public class JacksGL extends javax.swing.JFrame {
                             }
                         }
                     }
+                    int faceCount = 0;
+                    for (JacksFace face : newObject.faceList) {
+                        jProgressBar1.setValue((faceCount++)
+                                * jProgressBar1.getMaximum() / newObject.faceList.length);
+                        if (face.vertexList.length >= 3) {
+                            face.calculateNormal();
+                            if (!vertexNormalSpecified || true) {
+                                for (int i : face.vertexList) {
+                                    face.parent.vertexList[i].normal.add(face.normal);
+                                }
+                            }
+                        }
+                    }
+                    for (int i = 0; i < newObject.vertexList.length; i++) {
+                        newObject.vertexList[i].normal.normalize();
+                    }
                     jProgressBar1.setValue(0);
                     glPanel.addGeometry(newObject);
                     refreshObjectList();
+                    System.out.println(newObject.name);
                 }
             };
 
@@ -1147,51 +1305,10 @@ public class JacksGL extends javax.swing.JFrame {
         glPanel.showBackFace = jCheckBox2.isSelected();
     }//GEN-LAST:event_jCheckBox2ActionPerformed
 
-    private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
-        glPanel.selectedObjects.clear();
-        if (jList1.getSelectedIndex() >= 0) {
-            if (jList1.getSelectedIndex() < glPanel.getGeometryList().size()) {
-                glPanel.activeObject = glPanel.getGeometryList().get(
-                        jList1.getSelectedIndex());
-            } else {
-                glPanel.activeObject = glPanel.getLightList().get(
-                        jList1.getSelectedIndex() - glPanel.getGeometryList().size());
-            }
-            if (jList1.getSelectedIndices().length > 0) {
-                for (int i : jList1.getSelectedIndices()) {
-                    if (i < glPanel.getGeometryList().size()) {
-                        glPanel.selectedObjects.add(glPanel.getGeometryList().get(i));
-                    } else {
-                        glPanel.selectedObjects.add(glPanel.getLightList().get(
-                                i - glPanel.getGeometryList().size()));
-                    }
-                }
-            }
-            populateObjectControl(glPanel.activeObject);
-            pnlObjectEdit.setVisible(true);
-            if (glPanel.activeObject instanceof JacksLight) {
-                pnlLightEdit.setVisible(true);
-                populateLightControl((JacksLight) glPanel.activeObject);
-            } else {
-                pnlLightEdit.setVisible(false);
-            }
-            jPanel2.repaint();
-        } else {
-            glPanel.activeObject = null;
-            pnlObjectEdit.setVisible(false);
-            pnlLightEdit.setVisible(false);
-        }
-    }//GEN-LAST:event_jList1ValueChanged
-
     private void jMenuItem5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem5ActionPerformed
         LinkedList<JacksObject> toRemove = new LinkedList<>();
-        for (int i : jList1.getSelectedIndices()) {
-            if (i < glPanel.getGeometryList().size()) {
-                toRemove.add(glPanel.getGeometryList().get(i));
-            } else {
-                toRemove.add(glPanel.getLightList().get(
-                        i - glPanel.getGeometryList().size()));
-            }
+        for (JacksObject object : glPanel.selectedObjects) {
+            toRemove.add(object);
         }
         for (JacksObject object : toRemove) {
             glPanel.removeObject(object);
@@ -1263,21 +1380,30 @@ public class JacksGL extends javax.swing.JFrame {
         if (SwingUtilities.isLeftMouseButton(evt)) {
             JacksObject selectedObject
                     = glPanel.selectOnScreen(new Point(evt.getX(), evt.getY()));
+            glPanel.activeObject = selectedObject;
             if (!shift) {
                 jList1.clearSelection();
-                glPanel.activeObject = selectedObject;
-                ArrayList<JacksGeometry> geometryList = glPanel.getGeometryList();
-                for (int i = 0; i < geometryList.size(); i++) {
-                    if (geometryList.get(i) == selectedObject) {
+                glPanel.selectedObjects.clear();
+            }
+            ArrayList<JacksGeometry> geometryList = glPanel.getGeometryList();
+            for (int i = 0; i < geometryList.size(); i++) {
+                if (geometryList.get(i) == selectedObject) {
+                    if (!shift) {
                         jList1.setSelectedIndex(i);
                         return;
+                    } else {
+                        jList1.addSelectionInterval(i, i);
                     }
                 }
-                ArrayList<JacksLight> lightList = glPanel.getLightList();
-                for (int i = 0; i < lightList.size(); i++) {
-                    if (lightList.get(i) == selectedObject) {
+            }
+            ArrayList<JacksLight> lightList = glPanel.getLightList();
+            for (int i = 0; i < lightList.size(); i++) {
+                if (lightList.get(i) == selectedObject) {
+                    if (!shift) {
                         jList1.setSelectedIndex(i + geometryList.size());
                         return;
+                    } else {
+                        jList1.addSelectionInterval(i + geometryList.size(), i + geometryList.size());
                     }
                 }
             }
@@ -1288,6 +1414,107 @@ public class JacksGL extends javax.swing.JFrame {
         glPanel.othogonal = jCheckBox3.isSelected();
     }//GEN-LAST:event_jCheckBox3ActionPerformed
 
+    private void jSlider2StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSlider2StateChanged
+        glPanel.cameraAngle = (float) (jSlider2.getValue() * Math.PI / 180);
+        lblCameraAngle.setText(jSlider2.getValue() + "");
+        glPanel.recalculateCamera();
+    }//GEN-LAST:event_jSlider2StateChanged
+
+    private void jCheckBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox4ActionPerformed
+        glPanel.hdriMode = jCheckBox4.isSelected();
+    }//GEN-LAST:event_jCheckBox4ActionPerformed
+
+    private void jCheckBox5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox5ActionPerformed
+        glPanel.smooth = jCheckBox5.isSelected();
+    }//GEN-LAST:event_jCheckBox5ActionPerformed
+
+    private void jCheckBox6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox6ActionPerformed
+        glPanel.forceSmooth = jCheckBox6.isSelected();
+    }//GEN-LAST:event_jCheckBox6ActionPerformed
+
+    private void jCheckBox7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox7ActionPerformed
+        glPanel.texture = jCheckBox7.isSelected();
+    }//GEN-LAST:event_jCheckBox7ActionPerformed
+
+    private void jCheckBox8ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox8ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jCheckBox8ActionPerformed
+
+    private void jList1ValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_jList1ValueChanged
+        if (!objectListLock) {
+            glPanel.selectedObjects.clear();
+            if (jList1.getSelectedIndex() >= 0) {
+                if (jList1.getSelectedIndex() < glPanel.getGeometryList().size()) {
+                    glPanel.activeObject = glPanel.getGeometryList().get(
+                            jList1.getSelectedIndex());
+                } else {
+                    glPanel.activeObject = glPanel.getLightList().get(
+                            jList1.getSelectedIndex() - glPanel.getGeometryList().size());
+                }
+                if (jList1.getSelectedIndices().length > 0) {
+                    for (int i : jList1.getSelectedIndices()) {
+                        if (i < glPanel.getGeometryList().size()) {
+                            glPanel.selectedObjects.add(glPanel.getGeometryList().get(i));
+                        } else {
+                            glPanel.selectedObjects.add(glPanel.getLightList().get(
+                                    i - glPanel.getGeometryList().size()));
+                        }
+                    }
+                }
+                pnlObjectEdit.setVisible(true);
+                populateControls();
+                jPanel2.repaint();
+            } else if (!shift) {
+                glPanel.activeObject = null;
+                pnlObjectEdit.setVisible(false);
+                pnlLightEdit.setVisible(false);
+            }
+        }
+    }//GEN-LAST:event_jList1ValueChanged
+
+    private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
+        clipboard.clear();
+        for (JacksObject object : glPanel.selectedObjects) {
+            clipboard.add(object);
+        }
+    }//GEN-LAST:event_jMenuItem1ActionPerformed
+
+    private void jMenuItem6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem6ActionPerformed
+        if (clipboard.size() > 0) {
+
+            glPanel.selectedObjects.clear();
+            for (JacksObject object : clipboard) {
+                JacksObject newObject = object.clone();
+                newObject.name = object.name + " Copy";
+                glPanel.addObject(newObject);
+                glPanel.selectedObjects.add(newObject);
+                glPanel.activeObject = newObject;
+//                System.out.println(object.name + " --> " + newObject.name);
+            }
+            System.out.println("dootster");
+            for (JacksObject object : glPanel.selectedObjects) {
+                System.out.println(object.name);
+            }
+            objectListLock = true;
+            jList1.clearSelection();
+            refreshObjectList();
+            populateControls();
+            objectListLock = false;
+        }
+    }//GEN-LAST:event_jMenuItem6ActionPerformed
+
+    private void jCheckBox9ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox9ActionPerformed
+        applyResolution();
+    }//GEN-LAST:event_jCheckBox9ActionPerformed
+
+    private void spnWidthStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnWidthStateChanged
+        applyResolution();
+    }//GEN-LAST:event_spnWidthStateChanged
+
+    private void spnHeightStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnHeightStateChanged
+        applyResolution();
+    }//GEN-LAST:event_spnHeightStateChanged
+
     private void cboLightTypeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cboLightTypeActionPerformed
         applyLightControl();
     }//GEN-LAST:event_cboLightTypeActionPerformed
@@ -1295,8 +1522,8 @@ public class JacksGL extends javax.swing.JFrame {
     private void pnlLightColorMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlLightColorMousePressed
         JColorChooser colorChooser = new JColorChooser();
         Color newColor = colorChooser.showDialog(this, "Pick a color",
-                new Color(sldLightRed.getValue(), sldLightGreen.getValue(),
-                        sldLightBlue.getValue()));
+            new Color(sldLightRed.getValue(), sldLightGreen.getValue(),
+                sldLightBlue.getValue()));
         if (newColor != null) {
             sldLightRed.setValue(newColor.getRed());
             sldLightGreen.setValue(newColor.getGreen());
@@ -1305,14 +1532,16 @@ public class JacksGL extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_pnlLightColorMousePressed
 
-    private void jSlider2StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSlider2StateChanged
-        glPanel.cameraAngle = (float) (jSlider2.getValue() * Math.PI / 180);
-        lblCameraAngle.setText(jSlider2.getValue() + "");
-    }//GEN-LAST:event_jSlider2StateChanged
+    private void jCheckBox10ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox10ActionPerformed
+        glPanel.showNormal = jCheckBox10.isSelected();
+    }//GEN-LAST:event_jCheckBox10ActionPerformed
 
-    private void jCheckBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox4ActionPerformed
-        glPanel.hdriMode = jCheckBox4.isSelected();
-    }//GEN-LAST:event_jCheckBox4ActionPerformed
+    void applyResolution() {
+        glPanel.forceResolution = jCheckBox9.isSelected();
+        glPanel.resolutionWidth = (Integer) spnWidth.getValue();
+        glPanel.resolutionHeight = (Integer) spnHeight.getValue();
+        glPanel.resize();
+    }
 
     float rotate(float number, float cap) {
         number %= cap;
@@ -1337,11 +1566,27 @@ public class JacksGL extends javax.swing.JFrame {
         model.removeAllElements();
         for (JacksGeometry object : glPanel.getGeometryList()) {
             model.addElement(object.name);
+            if (glPanel.selectedObjects.contains(object)) {
+                jList1.addSelectionInterval(model.getSize() - 1, model.getSize() - 1);
+            }
         }
         for (JacksLight light : glPanel.getLightList()) {
             model.addElement(light.name);
+            if (glPanel.selectedObjects.contains(light)) {
+                jList1.addSelectionInterval(model.getSize() - 1, model.getSize() - 1);
+            }
         }
         refreshStats();
+    }
+
+    void populateControls() {
+        populateObjectControl(glPanel.activeObject);
+        if (glPanel.activeObject instanceof JacksLight) {
+            pnlLightEdit.setVisible(true);
+            populateLightControl((JacksLight) glPanel.activeObject);
+        } else {
+            pnlLightEdit.setVisible(false);
+        }
     }
 
     void populateObjectControl(JacksObject object) {
@@ -1476,9 +1721,15 @@ public class JacksGL extends javax.swing.JFrame {
     private javax.swing.JButton jButton6;
     private javax.swing.JButton jButton7;
     private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JCheckBox jCheckBox10;
     private javax.swing.JCheckBox jCheckBox2;
     private javax.swing.JCheckBox jCheckBox3;
     private javax.swing.JCheckBox jCheckBox4;
+    private javax.swing.JCheckBox jCheckBox5;
+    private javax.swing.JCheckBox jCheckBox6;
+    private javax.swing.JCheckBox jCheckBox7;
+    private javax.swing.JCheckBox jCheckBox8;
+    private javax.swing.JCheckBox jCheckBox9;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
@@ -1488,18 +1739,21 @@ public class JacksGL extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JLabel jLabel7;
     private javax.swing.JList<String> jList1;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
+    private javax.swing.JMenuItem jMenuItem6;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JSlider jSlider1;
     private javax.swing.JSlider jSlider2;
     private javax.swing.JLabel lblAmbientLight;
@@ -1522,6 +1776,7 @@ public class JacksGL extends javax.swing.JFrame {
     private javax.swing.JSlider sldLightGreen;
     private javax.swing.JSlider sldLightRed;
     private javax.swing.JSpinner spnEnergy;
+    private javax.swing.JSpinner spnHeight;
     private javax.swing.JSpinner spnLocX;
     private javax.swing.JSpinner spnLocY;
     private javax.swing.JSpinner spnLocZ;
@@ -1531,5 +1786,6 @@ public class JacksGL extends javax.swing.JFrame {
     private javax.swing.JSpinner spnScaleX;
     private javax.swing.JSpinner spnScaleY;
     private javax.swing.JSpinner spnScaleZ;
+    private javax.swing.JSpinner spnWidth;
     // End of variables declaration//GEN-END:variables
 }

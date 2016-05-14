@@ -1,7 +1,3 @@
-
-import java.util.HashMap;
-import java.util.HashSet;
-
 public abstract class  JacksObject {
     float x = 0;
     float y = 0;
@@ -14,7 +10,8 @@ public abstract class  JacksObject {
     float scaleZ = 1;
     String name;
     
-    JacksObject() {
-        
-    }
+    JacksObject() {}
+    
+    @Override
+    protected abstract JacksObject clone();
 }

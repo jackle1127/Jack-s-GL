@@ -6,6 +6,7 @@ public class JacksFace {
     JacksVector normal = new JacksVector();
     JacksMaterial material = new JacksMaterial();
     JacksGeometry parent;
+    boolean smooth = false;
     
     JacksFace(JacksGeometry parent) {
         this.parent = parent;
@@ -19,16 +20,10 @@ public class JacksFace {
     void addVertex(int vertex) {
         vertexList = Arrays.copyOf(vertexList, vertexList.length + 1);
         vertexList[vertexList.length - 1] = vertex;
-        if (vertexList.length >= 3) {
-            calculateNormal();
-        }
     }
     
     void setVertices(int[] vertices) {
         vertexList = Arrays.copyOf(vertices, vertices.length);
-        if (vertexList.length >= 3) {
-            calculateNormal();
-        }
     }
     
     void addUV(UVCoordinate newUV) {
@@ -57,6 +52,11 @@ public class JacksFace {
         public UVCoordinate(float u, float v) {
             this.u = u;
             this.v = v;
+        }
+
+        @Override
+        protected UVCoordinate clone() {
+            return new UVCoordinate(u, v);
         }
     }
 }

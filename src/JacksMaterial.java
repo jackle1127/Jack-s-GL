@@ -3,6 +3,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
 public class JacksMaterial {
+
     float r = 1;
     float g = 1;
     float b = 1;
@@ -12,11 +13,12 @@ public class JacksMaterial {
     float rA = 0;
     float gA = 0;
     float bA = 0;
+    float a = 1;
     float specular = 1;
     int specularExponent = 3;
     private int width = 0;
     private int height = 0;
-    byte[] texture;
+    char[] texture;
     String name = "unnamed";
 
     public JacksMaterial() {
@@ -33,11 +35,11 @@ public class JacksMaterial {
         this.specular = specular;
         this.specularExponent = specularExponent;
     }
-    
+
     public JacksMaterial(String name) {
         this.name = name;
     }
-    
+
     public JacksMaterial(BufferedImage texture,
             float specular, int specularExponent) {
         BufferedImage temp = new BufferedImage(texture.getWidth(),
@@ -45,41 +47,47 @@ public class JacksMaterial {
         temp.getGraphics().drawImage(texture, 0, 0, null);
         width = texture.getWidth();
         height = texture.getHeight();
-        this.texture = ((DataBufferByte) temp.getData().getDataBuffer()).getData();
         this.specular = specular;
         this.specularExponent = specularExponent;
+        setTexture(texture);
     }
-    
+
     void setTexture(BufferedImage texture) {
         BufferedImage temp = new BufferedImage(texture.getWidth(),
                 texture.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
         temp.getGraphics().drawImage(texture, 0, 0, null);
         width = texture.getWidth();
         height = texture.getHeight();
-        this.texture = ((DataBufferByte) temp.getData().getDataBuffer()).getData();
+        byte[] tempByteArray = ((DataBufferByte) temp.getData().getDataBuffer()).getData();
+        this.texture = new char[tempByteArray.length];
+        for (int i = 0; i < tempByteArray.length; i++) {
+            this.texture[i] = byteToChar(tempByteArray[i]);
+        }
+        
     }
-    
+
     float getB(float x, float y) {
 //        System.out.println(x + ", " + y);
-        return byteToFloat(texture[(rotateNumber((int)((1 - y) * (height)), height) * width
-                + rotateNumber((int)(x * (width)), width)) * 3]) / 255.0f;
+        return (float) (texture[(rotateNumber((int) ((1 - y) * (height)), height) * width
+                + rotateNumber((int) (x * (width)), width)) * 3]) / 255.0f;
     }
-    
+
     float getG(float x, float y) {
-        return byteToFloat(texture[(rotateNumber((int)((1 - y) * (height)), height) * width
-                + rotateNumber((int)(x * (width)), width)) * 3 + 1]) / 255.0f;
+        return (float) (texture[(rotateNumber((int) ((1 - y) * (height)), height) * width
+                + rotateNumber((int) (x * (width)), width)) * 3 + 1]) / 255.0f;
     }
-    
+
     float getR(float x, float y) {
-        return byteToFloat(texture[(rotateNumber((int)((1 - y) * (height)), height) * width
-                + rotateNumber((int)(x * (width)), width)) * 3 + 2]) / 255.0f;
+        return (float) (texture[(rotateNumber((int) ((1 - y) * (height)), height) * width
+                + rotateNumber((int) (x * (width)), width)) * 3 + 2]) / 255.0f;
     }
-    
-    float byteToFloat(byte number) {
+
+    char byteToChar(byte number) {
         return number >= 0
-                ? number
-                : number + 256;
+                ? (char) number
+                : (char) (number + 256);
     }
+
     private int rotateNumber(int x, int max) {
         x = x % max;
         if (x < 0) {
