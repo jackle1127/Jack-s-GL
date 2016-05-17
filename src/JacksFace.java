@@ -58,5 +58,10 @@ public class JacksFace {
         protected UVCoordinate clone() {
             return new UVCoordinate(u, v);
         }
+        
+        @Override
+        public String toString() {
+            return "(" + u + ", " + v + ")";
+        }
     }
 }

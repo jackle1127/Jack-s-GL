@@ -14,11 +14,15 @@ public class JacksMaterial {
     float gA = 0;
     float bA = 0;
     float a = 1;
+    float n = 1;
     float specular = 1;
     int specularExponent = 3;
     private int width = 0;
     private int height = 0;
+    private int widthNormal = 0;
+    private int heightNormal = 0;
     char[] texture;
+    char[] normalMap;
     String name = "unnamed";
 
     public JacksMaterial() {
@@ -53,21 +57,36 @@ public class JacksMaterial {
     }
 
     void setTexture(BufferedImage texture) {
-        BufferedImage temp = new BufferedImage(texture.getWidth(),
-                texture.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
-        temp.getGraphics().drawImage(texture, 0, 0, null);
         width = texture.getWidth();
         height = texture.getHeight();
+        loadTexture(texture, 0);
+    }
+
+    void setNormalMap(BufferedImage normalMap) {
+        widthNormal = normalMap.getWidth();
+        heightNormal = normalMap.getHeight();
+        loadTexture(normalMap, 1);
+    }
+
+    private void loadTexture(BufferedImage image, int type) {
+        BufferedImage temp = new BufferedImage(image.getWidth(),
+                image.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+        temp.getGraphics().drawImage(image, 0, 0, null);
         byte[] tempByteArray = ((DataBufferByte) temp.getData().getDataBuffer()).getData();
-        this.texture = new char[tempByteArray.length];
-        for (int i = 0; i < tempByteArray.length; i++) {
-            this.texture[i] = byteToChar(tempByteArray[i]);
+        char[] array = null;
+        if (type == 0) {
+            texture = new char[tempByteArray.length];
+            array = texture;
+        } else if (type == 1) {
+            normalMap = new char[tempByteArray.length];
+            array = normalMap;
         }
-        
+        for (int i = 0; i < tempByteArray.length; i++) {
+            array[i] = byteToChar(tempByteArray[i]);
+        }
     }
 
     float getB(float x, float y) {
-//        System.out.println(x + ", " + y);
         return (float) (texture[(rotateNumber((int) ((1 - y) * (height)), height) * width
                 + rotateNumber((int) (x * (width)), width)) * 3]) / 255.0f;
     }
@@ -80,6 +99,21 @@ public class JacksMaterial {
     float getR(float x, float y) {
         return (float) (texture[(rotateNumber((int) ((1 - y) * (height)), height) * width
                 + rotateNumber((int) (x * (width)), width)) * 3 + 2]) / 255.0f;
+    }
+
+    float getNormalZ(float x, float y) {
+        return (float) (normalMap[(rotateNumber((int) ((1 - y) * (heightNormal)), heightNormal) * widthNormal
+                + rotateNumber((int) (x * (widthNormal)), widthNormal)) * 3]) / 255.0f;
+    }
+
+    float getNormalY(float x, float y) {
+        return (float) (normalMap[(rotateNumber((int) ((1 - y) * (heightNormal)), heightNormal) * widthNormal
+                + rotateNumber((int) (x * (widthNormal)), widthNormal)) * 3 + 1]) / 255.0f;
+    }
+
+    float getNormalX(float x, float y) {
+        return (float) (normalMap[(rotateNumber((int) ((1 - y) * (heightNormal)), heightNormal) * widthNormal
+                + rotateNumber((int) (x * (widthNormal)), widthNormal)) * 3 + 2]) / 255.0f;
     }
 
     char byteToChar(byte number) {

@@ -47,4 +47,9 @@ public class JacksVertex {
         result.normal = normal.clone();
         return result;
     }
+    
+    @Override
+    public String toString() {
+        return "(" + x + ", " + y + ", " + z + ")";
+    }
 }

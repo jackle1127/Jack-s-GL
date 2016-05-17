@@ -14,7 +14,7 @@ import java.util.LinkedList;
 
 public class JacksGLPanel extends javax.swing.JPanel {
 
-    private final float INTERPOLATION_CLAMP = .001f;
+    private final float INTERPOLATION_CLAMP = .0001f;
     int lightOnScreenSize = 20;
     int numberOfThreads = 4;
     float deltaTime = 0;
@@ -53,13 +53,10 @@ public class JacksGLPanel extends javax.swing.JPanel {
     private byte[] renderedBytes;
     private byte[] hdriBytes;
     private byte[] tempBytes;
-    private Point[] locationMap;
     private JacksVertex projectedVertexMap[] = new JacksVertex[3];
-    private JacksIllumination illuminationMap[] = new JacksIllumination[3];
+    private JacksIllumination faceIllumination = new JacksIllumination();
 
-    private float tempFloat;
-    private float vYLength;
-    private float vXLength;
+    private float tempFloat, vYLength, vXLength, coefficient1, coefficient2;
     private JacksVector v = new JacksVector();
     private JacksVector vX = new JacksVector();
     private JacksVector vY = new JacksVector();
@@ -68,7 +65,6 @@ public class JacksGLPanel extends javax.swing.JPanel {
 
     private JacksGeometry object;
     private int currentVertexIndex;
-    private int activeVertexIndex;
     private float fromZ;
     private float toZ;
     private float fromX;
@@ -77,12 +73,16 @@ public class JacksGLPanel extends javax.swing.JPanel {
     private float toU;
     private float fromV;
     private float toV;
-    private JacksIllumination fromIllumination = new JacksIllumination();
-    private JacksIllumination toIllumination = new JacksIllumination();
     private JacksIllumination currentIllumination = new JacksIllumination();
     private JacksVertex fromVertex = new JacksVertex();
     private JacksVertex toVertex = new JacksVertex();
     private JacksVertex currentVertex = new JacksVertex();
+    private JacksVector fromUp = new JacksVector();
+    private JacksVector toUp = new JacksVector();
+    private JacksVector fromRight = new JacksVector();
+    private JacksVector toRight = new JacksVector();
+    private JacksVector currentUp = new JacksVector();
+    private JacksVector currentRight = new JacksVector();
     private float tempU;
     private float tempV;
     private float alpha;
@@ -96,6 +96,8 @@ public class JacksGLPanel extends javax.swing.JPanel {
     private Point point[] = new Point[3];
     private JacksVertex projectedVertex[] = new JacksVertex[3];
     private JacksFace.UVCoordinate uv[] = new JacksFace.UVCoordinate[3];
+    private JacksVector up[] = new JacksVector[3];
+    private JacksVector right[] = new JacksVector[3];
     private int order[] = new int[3];
     private int temp;
     private JacksLight lights[];
@@ -139,9 +141,10 @@ public class JacksGLPanel extends javax.swing.JPanel {
     });
 
     public JacksGLPanel() {
-        illuminationMap[0] = new JacksIllumination();
-        illuminationMap[1] = new JacksIllumination();
-        illuminationMap[2] = new JacksIllumination();
+        for (int i = 0; i < 3; i++) {
+            up[i] = new JacksVector();
+            right[i] = new JacksVector();
+        }
         initComponents();
         resize();
         this.addComponentListener(new ComponentAdapter() {
@@ -254,6 +257,8 @@ public class JacksGLPanel extends javax.swing.JPanel {
                         }
                     }
                     if (showNormal) {
+                        int i = 0;
+                        g.setColor(Color.CYAN);
                         for (JacksVertex vertex : projectedVertexMap) {
                             if (vertex.z > 0) {
                                 continue;
@@ -265,7 +270,6 @@ public class JacksGLPanel extends javax.swing.JPanel {
                             tail.z += vertex.normal.z / 3;
                             Point tailPoint = xyzToOnScreenXY(tail);
 
-                            g.setColor(Color.CYAN);
                             g.drawLine(vertexPoint.x, vertexPoint.y,
                                     tailPoint.x, tailPoint.y);
                         }
@@ -280,42 +284,6 @@ public class JacksGLPanel extends javax.swing.JPanel {
 
         stopTime = System.nanoTime();
         return stopTime - startTime;
-    }
-
-    float interpolateZbyX(float x1, float z1, float x2, float z2, int xS, int wS,
-            float w) {
-        if (testDifference(z1, z2)) {
-//            System.out.println("boop " + z1 + " - " + System.currentTimeMillis());
-            return z1;
-        }
-        tempFloat = (x1 - z1 * (x2 - x1) / (z2 - z1))
-                / (-(x2 - x1) / (z2 - z1)
-                + (.5f - (float) xS / (float) wS) * w);
-        if ((tempFloat - z1) / (z2 - z1) > 1) {
-            return z2;
-        }
-        if ((tempFloat - z1) / (z2 - z1) < 0) {
-            return z1;
-        }
-        return tempFloat;
-
-    }
-
-    float interpolateZbyY(float y1, float z1, float y2, float z2, int yS, int hS,
-            float h) {
-        if (testDifference(z1, z2)) {
-            return z1;
-        }
-        tempFloat = (z1 * (y2 - y1) / (z2 - z1) - y1)
-                / ((y2 - y1) / (z2 - z1)
-                + ((.5f - (float) yS / (float) hS) * h));
-        if ((tempFloat - z1) / (z2 - z1) > 1) {
-            return z2;
-        }
-        if ((tempFloat - z1) / (z2 - z1) < 0) {
-            return z1;
-        }
-        return tempFloat;
     }
 
     private void drawObject(JacksGeometry object, boolean alwaysOnTop) {
@@ -353,10 +321,8 @@ public class JacksGLPanel extends javax.swing.JPanel {
             if (!showBackFace && toCenter.dotProduct(normal) > 0) {
                 return; // Skip back face.
             }
-            toCenter.normalize();
 
             for (int i = 1; i < face.vertexList.length - 1; i++) {
-
                 // Rasterization
                 projectedVertex[0] = projectedVertexMap[face.vertexList[0]
                         + currentVertexIndex];
@@ -375,18 +341,8 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 point[1] = xyzToOnScreenXY(projectedVertex[1]);
                 point[2] = xyzToOnScreenXY(projectedVertex[2]);
 
-                if (face.smooth && smooth || forceSmooth) {
-//                    calculateLuminance(illuminationMap[0],
-//                            projectedVertex[0].x, projectedVertex[0].y,
-//                            projectedVertex[0].z, projectedVertex[0].normal, face.material);
-//                    calculateLuminance(illuminationMap[1],
-//                            projectedVertex[1].x, projectedVertex[1].y,
-//                            projectedVertex[1].z, projectedVertex[1].normal, face.material);
-//                    calculateLuminance(illuminationMap[2],
-//                            projectedVertex[2].x, projectedVertex[2].y,
-//                            projectedVertex[2].z, projectedVertex[2].normal, face.material);
-                } else {
-                    calculateLuminance(illuminationMap[0],
+                if (!(face.smooth && smooth || forceSmooth)) {
+                    calculateLuminance(faceIllumination,
                             center.x, center.y,
                             center.z, normal, face.material);
                 }
@@ -394,6 +350,21 @@ public class JacksGLPanel extends javax.swing.JPanel {
                     uv[0] = face.uv[0];
                     uv[1] = face.uv[i];
                     uv[2] = face.uv[i + 1];
+                }
+
+                if (face.material.normalMap != null) {
+                    calculateUp(up[0], projectedVertex[0], projectedVertex[1],
+                            projectedVertex[2], uv[0], uv[1], uv[2]);
+                    calculateUp(up[1], projectedVertex[1], projectedVertex[2],
+                            projectedVertex[0], uv[1], uv[2], uv[0]);
+                    calculateUp(up[2], projectedVertex[2], projectedVertex[0],
+                            projectedVertex[1], uv[2], uv[0], uv[1]);
+                    calculateRight(right[0], projectedVertex[0], projectedVertex[1],
+                            projectedVertex[2], uv[0], uv[1], uv[2]);
+                    calculateRight(right[1], projectedVertex[1], projectedVertex[2],
+                            projectedVertex[0], uv[1], uv[2], uv[0]);
+                    calculateRight(right[2], projectedVertex[2], projectedVertex[0],
+                            projectedVertex[1], uv[2], uv[0], uv[1]);
                 }
 
                 if (Math.abs((float) (point[0].x * (point[2].y - point[1].y)
@@ -456,8 +427,6 @@ public class JacksGLPanel extends javax.swing.JPanel {
                     toX = linear(alpha, projectedVertex[order[0]].x,
                             projectedVertex[order[2]].x);
                     if (face.smooth && smooth || forceSmooth) {
-//                        linear(toIllumination, alpha, illuminationMap[order[0]],
-//                                illuminationMap[order[2]]);
                         linear(toVertex, alpha, projectedVertex[order[0]],
                                 projectedVertex[order[2]]);
                     }
@@ -465,8 +434,13 @@ public class JacksGLPanel extends javax.swing.JPanel {
                         toU = linear(alpha, uv[order[0]].u, uv[order[2]].u);
                         toV = linear(alpha, uv[order[0]].v, uv[order[2]].v);
                     }
+                    if (face.material.normalMap != null) {
+                        linear(toUp, alpha, up[order[0]], up[order[2]]);
+                        linear(toRight, alpha, right[order[0]], right[order[2]]);
+                    }
                     if (y <= point[order[1]].y) {
                         // First half
+
                         fromZ = interpolateZbyY(projectedVertex[order[0]].y,
                                 projectedVertex[order[0]].z,
                                 projectedVertex[order[1]].y,
@@ -498,13 +472,14 @@ public class JacksGLPanel extends javax.swing.JPanel {
                                 point[order[1]].y, y,
                                 point[order[0]].x, point[order[1]].x);
                         if (face.smooth && smooth || forceSmooth) {
-//                            linear(fromIllumination, alpha, illuminationMap[order[0]],
-//                                    illuminationMap[order[1]]);
                             linear(fromVertex, alpha, projectedVertex[order[0]],
                                     projectedVertex[order[1]]);
                         }
-                    } else {
-                        // Second half
+                        if (face.material.normalMap != null) {
+                            linear(fromUp, alpha, up[order[0]], up[order[1]]);
+                            linear(fromRight, alpha, right[order[0]], right[order[1]]);
+                        }
+                    } else {// Second half
                         fromZ = interpolateZbyY(projectedVertex[order[1]].y,
                                 projectedVertex[order[1]].z,
                                 projectedVertex[order[2]].y,
@@ -536,10 +511,12 @@ public class JacksGLPanel extends javax.swing.JPanel {
                                 point[order[2]].y, y,
                                 point[order[1]].x, point[order[2]].x);
                         if (face.smooth && smooth || forceSmooth) {
-//                            linear(fromIllumination, alpha, illuminationMap[order[1]],
-//                                    illuminationMap[order[2]]);
                             linear(fromVertex, alpha, projectedVertex[order[1]],
                                     projectedVertex[order[2]]);
+                        }
+                        if (face.material.normalMap != null) {
+                            linear(fromUp, alpha, up[order[1]], up[order[2]]);
+                            linear(fromRight, alpha, right[order[1]], right[order[2]]);
                         }
                     }
                     increment = fromXOnScreen > toXOnScreen ? -1 : 1;
@@ -560,10 +537,6 @@ public class JacksGLPanel extends javax.swing.JPanel {
             currentZ = interpolateZbyX(
                     fromX, fromZ, toX, toZ,
                     x, panelWidth, cameraWidth);
-//            if (Math.abs(currentZ) > 1000) {
-//                System.out.println(currentZ + ", " + fromZ + ", " + toZ
-//                        + ", " + fromX + ", " + toX);
-//            }
             if (!testDifference(fromZ, toZ)) {
                 alpha = (currentZ - fromZ) / (toZ - fromZ);
             } else {
@@ -573,38 +546,45 @@ public class JacksGLPanel extends javax.swing.JPanel {
                         / (float) (toXOnScreen - fromXOnScreen);
             }
             if (-currentZ > 0 && -currentZ < depthBuffer[y][x] || alwaysOnTop) {
-                if (face.smooth && smooth || forceSmooth) {
-//                    linear(currentIllumination, alpha, fromIllumination,
-//                            toIllumination);
-                    linear(currentVertex, alpha, fromVertex, toVertex);
-                    calculateLuminance(currentIllumination,
-                            currentVertex.x, currentVertex.y,
-                            currentVertex.z, currentVertex.normal, face.material);
+                linear(currentVertex, alpha, fromVertex, toVertex);
+                if (face.uv[0] != null) {
+                    tempU = linear(alpha, fromU, toU);
+                    tempV = linear(alpha, fromV, toV);
                 } else {
-                    currentIllumination.copyAttribute(illuminationMap[0]);
+                    tempU = 0;
+                    tempV = 0;
                 }
                 if (face.material.texture == null || !texture) {
                     r = face.material.r;
                     g = face.material.g;
                     b = face.material.b;
                 } else {
-                    tempU = linear(alpha, fromU, toU);
-                    tempV = linear(alpha, fromV, toV);
                     r = face.material.getR(tempU, tempV);
                     g = face.material.getG(tempU, tempV);
                     b = face.material.getB(tempU, tempV);
-//                    System.out.println(r + ", " + g + ", " + b);
                 }
+                if (face.material.normalMap != null) {
+                    linear(currentUp, alpha, fromUp, toUp);
+                    linear(currentRight, alpha, fromRight, toRight);
+                    currentUp.normalize();
+                    currentRight.normalize();
+                    currentUp.multiply((face.material.getNormalY(tempU, tempV) - .5f) * face.material.n);
+                    currentRight.multiply((face.material.getNormalX(tempU, tempV) - .5f) * face.material.n);
+                    currentVertex.normal.multiply(face.material.getNormalZ(tempU, tempV) - .5f);
+                    currentVertex.normal.add(currentUp, currentRight);
+                    currentVertex.normal.normalize();
+                }
+                if (face.smooth && smooth || forceSmooth) {
+                    calculateLuminance(currentIllumination,
+                            currentVertex.x, currentVertex.y,
+                            currentVertex.z, currentVertex.normal, face.material);
+                } else {
+                    currentIllumination.copyAttribute(faceIllumination);
+                }
+
                 r = r * currentIllumination.dR;
                 g = g * currentIllumination.dG;
                 b = b * currentIllumination.dB;
-//                if (r > 10 || g > 10 || b > 10) {
-//                    System.out.println(r + ", " + g + ", " + b);
-//                    System.out.println("alpha= " + alpha);
-//                    System.out.println("c = " + currentIllumination);
-//                    System.out.println("f = " + fromIllumination);
-//                    System.out.println("t = " + toIllumination);
-//                }
 
                 if (face.material.a < 1) {
                     r = (1 - face.material.a)
@@ -617,10 +597,20 @@ public class JacksGLPanel extends javax.swing.JPanel {
                             * byteToFloat(renderedBytes[(y * panelWidth + x) * 3]) / 255
                             + face.material.a * b;
                 }
+
                 r += currentIllumination.sR;
                 g += currentIllumination.sG;
                 b += currentIllumination.sB;
 
+                if (hdri != null) {
+                    int rgb = getRGBByVector(currentVertex.normal);
+                    float red = (float) ((rgb >> 16) & 0xFF) / 255;
+                    float green = (float) ((rgb >> 8) & 0xFF) / 255;
+                    float blue = (float) (rgb & 0xFF) / 255;
+                    r = .5f * r + .5f * red;
+                    g = .5f * g + .5f * green;
+                    b = .5f * b + .5f * blue;
+                }
                 if (r > 1) {
                     r = 1;
                 }
@@ -640,6 +630,81 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 depthBuffer[y][x] = -currentZ;
             }
         }
+    }
+
+    void calculateUp(JacksVector upVector, JacksVertex v1, JacksVertex v2,
+            JacksVertex v3,
+            JacksFace.UVCoordinate uv1, JacksFace.UVCoordinate uv2,
+            JacksFace.UVCoordinate uv3) {
+        if (uv1.u == uv2.u) {
+            coefficient1 = 0;
+            coefficient2 = 1.0f / (uv1.v - uv2.v);
+        } else if (uv1.u == uv3.u) {
+            coefficient1 = 1.0f / (uv1.v - uv3.v);
+            coefficient2 = 0;
+        } else {
+            coefficient1 = 1.0f / ((uv1.v - uv3.v) - (uv1.u - uv3.u) * (uv1.v - uv2.v) / (uv1.u - uv2.u));
+            coefficient2 = (-coefficient1 * (uv1.u - uv3.u)) / (uv1.u - uv2.u);
+        }
+        upVector.x = coefficient1 * (v1.x - v3.x) + coefficient2 * (v1.x - v2.x);
+        upVector.y = coefficient1 * (v1.y - v3.y) + coefficient2 * (v1.y - v2.y);
+        upVector.z = coefficient1 * (v1.z - v3.z) + coefficient2 * (v1.z - v2.z);
+//        System.out.println(coefficient1 + "-" + coefficient2 + "-" + v1 + "-" + v2 + "-" + v3 + "-" + uv1 + "-" + uv2 + "-" + uv3);
+    }
+
+    void calculateRight(JacksVector upVector, JacksVertex v1, JacksVertex v2,
+            JacksVertex v3,
+            JacksFace.UVCoordinate uv1, JacksFace.UVCoordinate uv2,
+            JacksFace.UVCoordinate uv3) {
+        if (uv1.v == uv2.v) {
+            coefficient1 = 0;
+            coefficient2 = 1.0f / (uv1.u - uv2.u);
+        } else if (uv1.v == uv3.v) {
+            coefficient1 = 1.0f / (uv1.u - uv3.u);
+            coefficient2 = 0;
+        } else {
+            coefficient1 = 1.0f / ((uv1.u - uv3.u) - (uv1.v - uv3.v) * (uv1.u - uv2.u) / (uv1.v - uv2.v));
+            coefficient2 = (-coefficient1 * (uv1.v - uv3.v)) / (uv1.v - uv2.v);
+        }
+        upVector.x = coefficient1 * (v1.x - v3.x) + coefficient2 * (v1.x - v2.x);
+        upVector.y = coefficient1 * (v1.y - v3.y) + coefficient2 * (v1.y - v2.y);
+        upVector.z = coefficient1 * (v1.z - v3.z) + coefficient2 * (v1.z - v2.z);
+    }
+
+    float interpolateZbyX(float x1, float z1, float x2, float z2, int xS, int wS,
+            float w) {
+        if (testDifference(z1, z2)) {
+//            System.out.println("boop " + z1 + " - " + System.currentTimeMillis());
+            return z1;
+        }
+        tempFloat = (x1 - z1 * (x2 - x1) / (z2 - z1))
+                / (-(x2 - x1) / (z2 - z1)
+                + (.5f - (float) xS / (float) wS) * w);
+        if ((tempFloat - z1) / (z2 - z1) > 1) {
+            return z2;
+        }
+        if ((tempFloat - z1) / (z2 - z1) < 0) {
+            return z1;
+        }
+        return tempFloat;
+
+    }
+
+    float interpolateZbyY(float y1, float z1, float y2, float z2, int yS, int hS,
+            float h) {
+        if (testDifference(z1, z2)) {
+            return z1;
+        }
+        tempFloat = (z1 * (y2 - y1) / (z2 - z1) - y1)
+                / ((y2 - y1) / (z2 - z1)
+                + ((.5f - (float) yS / (float) hS) * h));
+        if ((tempFloat - z1) / (z2 - z1) > 1) {
+            return z2;
+        }
+        if ((tempFloat - z1) / (z2 - z1) < 0) {
+            return z1;
+        }
+        return tempFloat;
     }
 
     private void calculateLuminance(JacksIllumination illumination,
@@ -1063,6 +1128,13 @@ public class JacksGLPanel extends javax.swing.JPanel {
         newVertex.normal.x = linear(alpha, start.normal.x, end.normal.x);
         newVertex.normal.y = linear(alpha, start.normal.y, end.normal.y);
         newVertex.normal.z = linear(alpha, start.normal.z, end.normal.z);
+    }
+
+    private void linear(JacksVector newVector,
+            float alpha, JacksVector start, JacksVector end) {
+        newVector.x = linear(alpha, start.x, end.x);
+        newVector.y = linear(alpha, start.y, end.y);
+        newVector.z = linear(alpha, start.z, end.z);
     }
 
     private float linear(int startProgress, int endProgress, int progress, int start, int end) {

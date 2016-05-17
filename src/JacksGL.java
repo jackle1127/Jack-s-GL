@@ -1105,7 +1105,7 @@ public class JacksGL extends javax.swing.JFrame {
     }//GEN-LAST:event_jButton3ActionPerformed
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
-        glPanel.addLight(new JacksLight(0, 4, 255, 255, 255, 0, 0, 0, true));
+        glPanel.addLight(new JacksLight(0, 1.5f, 255, 255, 255, 0, 0, 0, true));
         refreshObjectList();
     }//GEN-LAST:event_jButton6ActionPerformed
 
@@ -1182,7 +1182,7 @@ public class JacksGL extends javax.swing.JFrame {
                                         } else if (materialLine.startsWith("Tr ")) {
                                             String[] att = materialLine.split("\\s+");
                                             readingMaterial.a = 1 - Float.parseFloat(att[1]);
-                                        } else if (materialLine.startsWith("map_Kd ")) {
+                                        } else if (materialLine.toLowerCase().startsWith("map_kd ")) {
                                             String texture
                                                     = materialLine.substring(
                                                             "map_Kd ".length()).trim();
@@ -1191,6 +1191,29 @@ public class JacksGL extends javax.swing.JFrame {
                                                         + File.separator + texture);
                                                 try {
                                                     readingMaterial.setTexture(
+                                                            ImageIO.read(new File(
+                                                                    directory + File.separator + texture)));
+                                                } catch (Exception e) {
+                                                    e.printStackTrace();
+                                                }
+                                            }
+                                        } else if (materialLine.toLowerCase().startsWith("map_bump ")) {
+                                            String texture
+                                                    = materialLine.substring(
+                                                            "map_Bump ".length()).trim();
+                                            if (!texture.isEmpty()) {
+                                                if (texture.startsWith("-bm ")) {
+                                                    texture = texture.substring(
+                                                            "-bm ".length()).trim();
+                                                    readingMaterial.n = Float
+                                                            .parseFloat(texture.substring(0, texture.indexOf(" ")));
+                                                    texture = texture.substring(
+                                                            texture.indexOf(" ")).trim();
+                                                }
+                                                System.out.println(directory
+                                                        + File.separator + texture);
+                                                try {
+                                                    readingMaterial.setNormalMap(
                                                             ImageIO.read(new File(
                                                                     directory + File.separator + texture)));
                                                 } catch (Exception e) {
@@ -1522,8 +1545,8 @@ public class JacksGL extends javax.swing.JFrame {
     private void pnlLightColorMousePressed(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_pnlLightColorMousePressed
         JColorChooser colorChooser = new JColorChooser();
         Color newColor = colorChooser.showDialog(this, "Pick a color",
-            new Color(sldLightRed.getValue(), sldLightGreen.getValue(),
-                sldLightBlue.getValue()));
+                new Color(sldLightRed.getValue(), sldLightGreen.getValue(),
+                        sldLightBlue.getValue()));
         if (newColor != null) {
             sldLightRed.setValue(newColor.getRed());
             sldLightGreen.setValue(newColor.getGreen());
