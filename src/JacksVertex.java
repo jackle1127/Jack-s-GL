@@ -24,7 +24,7 @@ public class JacksVertex {
         this.z = z;
     }
     
-    void project(JacksOrigin origin) {
+    void transform(JacksOrigin origin) {
         tempX = origin.translate.x
                 + x * origin.x.x
                 + y * origin.y.x
@@ -39,9 +39,16 @@ public class JacksVertex {
                 + z * origin.z.z;
         x = tempX;
         y = tempY;
-        normal.project(origin);
+        normal.transform(origin);
     }
     
+    void copyAttribute(JacksVertex other) {
+        this.x = other.x;
+        this.y = other.y;
+        this.z = other.z;
+        this.normal.copyXYZ(other.normal);
+    }
+
     protected JacksVertex clone() {
         JacksVertex result = new JacksVertex(x, y, z);
         result.normal = normal.clone();

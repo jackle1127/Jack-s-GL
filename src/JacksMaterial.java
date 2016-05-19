@@ -1,4 +1,5 @@
 
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferByte;
 
@@ -15,8 +16,7 @@ public class JacksMaterial {
     float bA = 0;
     float a = 1;
     float n = 1;
-    float specular = 1;
-    int specularExponent = 3;
+    int specularExponent = 64;
     private int width = 0;
     private int height = 0;
     private int widthNormal = 0;
@@ -36,7 +36,6 @@ public class JacksMaterial {
         this.rS = rS;
         this.gS = gS;
         this.bS = bS;
-        this.specular = specular;
         this.specularExponent = specularExponent;
     }
 
@@ -51,7 +50,6 @@ public class JacksMaterial {
         temp.getGraphics().drawImage(texture, 0, 0, null);
         width = texture.getWidth();
         height = texture.getHeight();
-        this.specular = specular;
         this.specularExponent = specularExponent;
         setTexture(texture);
     }
@@ -128,5 +126,41 @@ public class JacksMaterial {
             x = max + x;
         }
         return x;
+    }
+
+    BufferedImage getTexture(Dimension size) {
+        if (texture == null) {
+            return null;
+        }
+        BufferedImage newImage = new BufferedImage(size.width, size.height,
+                BufferedImage.TYPE_3BYTE_BGR);
+        for (int y = 0; y < newImage.getHeight(); y++) {
+            for (int x = 0; x < newImage.getWidth(); x++) {
+                float newX = (float) x / size.width;
+                float newY = (float) y / size.height;
+                newImage.setRGB(x, y, ((int) (getR(newX, newY) * 255) << 16)
+                        + ((int) (getG(newX, newY) * 255) << 8)
+                        + (int) (getB(newX, newY) * 255));
+            }
+        }
+        return newImage;
+    }
+    
+    BufferedImage getNormalMap(Dimension size) {
+        if (normalMap == null) {
+            return null;
+        }
+        BufferedImage newImage = new BufferedImage(size.width, size.height,
+                BufferedImage.TYPE_3BYTE_BGR);
+        for (int y = 0; y < newImage.getHeight(); y++) {
+            for (int x = 0; x < newImage.getWidth(); x++) {
+                float newX = (float) x / size.width;
+                float newY = (float) y / size.height;
+                newImage.setRGB(x, y, ((int) (getNormalX(newX, newY) * 255) << 16)
+                        + ((int) (getNormalY(newX, newY) * 255) << 8)
+                        + (int) (getNormalZ(newX, newY) * 255));
+            }
+        }
+        return newImage;
     }
 }

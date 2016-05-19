@@ -92,7 +92,7 @@ public class JacksLight extends JacksObject {
         direction.copyXYZ(other.direction);
     }
 
-    void project(JacksOrigin origin) {
+    void tranform(JacksOrigin origin) {
         tempX = origin.translate.x
                 + x * origin.x.x
                 + y * origin.y.x
@@ -107,7 +107,7 @@ public class JacksLight extends JacksObject {
                 + z * origin.z.z;
         x = tempX;
         y = tempY;
-        direction.project(origin);
+        direction.transform(origin);
     }
 
     @Override

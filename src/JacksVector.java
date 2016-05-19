@@ -57,7 +57,7 @@ public class JacksVector {
         setXYZ(vector.x, vector.y, vector.z);
     }
     
-    void project(JacksOrigin origin) {
+    void transform(JacksOrigin origin) {
         tempX = x * origin.x.x
                 + y * origin.y.x
                 + z * origin.z.x;
