@@ -729,7 +729,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
 //        System.out.println(coefficient1 + "-" + coefficient2 + "-" + v1 + "-" + v2 + "-" + v3 + "-" + uv1 + "-" + uv2 + "-" + uv3);
     }
 
-    void calculateRight(JacksVector upVector, JacksVertex v1, JacksVertex v2,
+    void calculateRight(JacksVector rightVector, JacksVertex v1, JacksVertex v2,
             JacksVertex v3,
             JacksFace.UVCoordinate uv1, JacksFace.UVCoordinate uv2,
             JacksFace.UVCoordinate uv3) {
@@ -743,9 +743,9 @@ public class JacksGLPanel extends javax.swing.JPanel {
             coefficient1 = 1.0f / ((uv1.u - uv3.u) - (uv1.v - uv3.v) * (uv1.u - uv2.u) / (uv1.v - uv2.v));
             coefficient2 = (-coefficient1 * (uv1.v - uv3.v)) / (uv1.v - uv2.v);
         }
-        upVector.x = coefficient1 * (v1.x - v3.x) + coefficient2 * (v1.x - v2.x);
-        upVector.y = coefficient1 * (v1.y - v3.y) + coefficient2 * (v1.y - v2.y);
-        upVector.z = coefficient1 * (v1.z - v3.z) + coefficient2 * (v1.z - v2.z);
+        rightVector.x = coefficient1 * (v1.x - v3.x) + coefficient2 * (v1.x - v2.x);
+        rightVector.y = coefficient1 * (v1.y - v3.y) + coefficient2 * (v1.y - v2.y);
+        rightVector.z = coefficient1 * (v1.z - v3.z) + coefficient2 * (v1.z - v2.z);
     }
 
     float interpolateZbyX(float x1, float z1, float x2, float z2, int xS, int wS,
