@@ -16,11 +16,13 @@ public class JacksMaterial {
     float bA = 0;
     float a = 1;
     float n = 1;
+    float environmentReflection = 0;
     int specularExponent = 64;
     private int width = 0;
     private int height = 0;
     private int widthNormal = 0;
     private int heightNormal = 0;
+    private float c0, c1, c2, c3, alphaX, alphaY;
     char[] texture;
     char[] normalMap;
     String name = "unnamed";
@@ -89,9 +91,31 @@ public class JacksMaterial {
                 + rotateNumber((int) (x * (width)), width)) * 3]) / 255.0f;
     }
 
+    float getBInterpolated(float x, float y) {
+        c0 = getB(x, y);
+        c1 = getB(x + 1f / width, y);
+        c2 = getB(x + 1f / width, y + 1f / height);
+        c3 = getB(x, y + 1f / height);
+        alphaX = (x * width) % 1;
+        alphaY = (y * height) % 1;
+        return (1 - alphaY) * (alphaX * c1 + (1 - alphaX) * c0)
+                + alphaY * (alphaX * c2 + (1 - alphaX) * c3);
+    }
+
     float getG(float x, float y) {
         return (float) (texture[(rotateNumber((int) ((1 - y) * (height)), height) * width
                 + rotateNumber((int) (x * (width)), width)) * 3 + 1]) / 255.0f;
+    }
+
+    float getGInterpolated(float x, float y) {
+        c0 = getG(x, y);
+        c1 = getG(x + 1f / width, y);
+        c2 = getG(x + 1f / width, y + 1f / height);
+        c3 = getG(x, y + 1f / height);
+        alphaX = (x * width) % 1;
+        alphaY = (y * height) % 1;
+        return (1 - alphaY) * (alphaX * c1 + (1 - alphaX) * c0)
+                + alphaY * (alphaX * c2 + (1 - alphaX) * c3);
     }
 
     float getR(float x, float y) {
@@ -99,21 +123,65 @@ public class JacksMaterial {
                 + rotateNumber((int) (x * (width)), width)) * 3 + 2]) / 255.0f;
     }
 
+    float getRInterpolated(float x, float y) {
+        c0 = getR(x, y);
+        c1 = getR(x + 1f / width, y);
+        c2 = getR(x + 1f / width, y + 1f / height);
+        c3 = getR(x, y + 1f / height);
+        alphaX = (x * width) % 1;
+        alphaY = (y * height) % 1;
+        return (1 - alphaY) * (alphaX * c1 + (1 - alphaX) * c0)
+                + alphaY * (alphaX * c2 + (1 - alphaX) * c3);
+    }
+
     float getNormalZ(float x, float y) {
         return (float) (normalMap[(rotateNumber((int) ((1 - y) * (heightNormal)), heightNormal) * widthNormal
                 + rotateNumber((int) (x * (widthNormal)), widthNormal)) * 3]) / 255.0f;
     }
 
+    float getNormalZInterpolated(float x, float y) {
+        c0 = getNormalZ(x, y);
+        c1 = getNormalZ(x + 1f / widthNormal, y);
+        c2 = getNormalZ(x + 1f / widthNormal, y + 1f / heightNormal);
+        c3 = getNormalZ(x, y + 1f / heightNormal);
+        alphaX = (x * widthNormal) % 1;
+        alphaY = (y * widthNormal) % 1;
+        return (1 - alphaY) * (alphaX * c1 + (1 - alphaX) * c0)
+                + alphaY * (alphaX * c2 + (1 - alphaX) * c3);
+    }
+    
     float getNormalY(float x, float y) {
         return (float) (normalMap[(rotateNumber((int) ((1 - y) * (heightNormal)), heightNormal) * widthNormal
                 + rotateNumber((int) (x * (widthNormal)), widthNormal)) * 3 + 1]) / 255.0f;
     }
 
+    float getNormalYInterpolated(float x, float y) {
+        c0 = getNormalY(x, y);
+        c1 = getNormalY(x + 1f / widthNormal, y);
+        c2 = getNormalY(x + 1f / widthNormal, y + 1f / heightNormal);
+        c3 = getNormalY(x, y + 1f / heightNormal);
+        alphaX = (x * widthNormal) % 1;
+        alphaY = (y * widthNormal) % 1;
+        return (1 - alphaY) * (alphaX * c1 + (1 - alphaX) * c0)
+                + alphaY * (alphaX * c2 + (1 - alphaX) * c3);
+    }
+    
     float getNormalX(float x, float y) {
         return (float) (normalMap[(rotateNumber((int) ((1 - y) * (heightNormal)), heightNormal) * widthNormal
                 + rotateNumber((int) (x * (widthNormal)), widthNormal)) * 3 + 2]) / 255.0f;
     }
 
+    float getNormalXInterpolated(float x, float y) {
+        c0 = getNormalX(x, y);
+        c1 = getNormalX(x + 1f / widthNormal, y);
+        c2 = getNormalX(x + 1f / widthNormal, y + 1f / heightNormal);
+        c3 = getNormalX(x, y + 1f / heightNormal);
+        alphaX = (x * widthNormal) % 1;
+        alphaY = (y * widthNormal) % 1;
+        return (1 - alphaY) * (alphaX * c1 + (1 - alphaX) * c0)
+                + alphaY * (alphaX * c2 + (1 - alphaX) * c3);
+    }
+    
     char byteToChar(byte number) {
         return number >= 0
                 ? (char) number
@@ -145,7 +213,7 @@ public class JacksMaterial {
         }
         return newImage;
     }
-    
+
     BufferedImage getNormalMap(Dimension size) {
         if (normalMap == null) {
             return null;

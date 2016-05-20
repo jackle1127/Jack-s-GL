@@ -1,7 +1,6 @@
 
 import java.util.Arrays;
 import java.util.HashSet;
-import javafx.scene.shape.Mesh;
 
 public class JacksGeometry extends JacksObject {
 
@@ -21,6 +20,8 @@ public class JacksGeometry extends JacksObject {
             id = newId;
             this.name = "Object " + newId;
             usedId.add(newId);
+        } else {
+            this.name = name;
         }
     }
 
@@ -31,6 +32,8 @@ public class JacksGeometry extends JacksObject {
             id = newId;
             this.name = "Object " + newId;
             usedId.add(newId);
+        } else {
+            this.name = name;
         }
     }
 

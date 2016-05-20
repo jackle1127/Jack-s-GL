@@ -358,12 +358,16 @@ public class JacksGL extends javax.swing.JFrame {
         spnNormalAmount = new javax.swing.JSpinner();
         lblSpecExp1 = new javax.swing.JLabel();
         sldAlpha = new javax.swing.JSlider();
+        jLabel15 = new javax.swing.JLabel();
+        sldEnvReflection = new javax.swing.JSlider();
+        jLabel16 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         jMenuItem2 = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
         jMenuItem3 = new javax.swing.JMenuItem();
+        jMenuItem7 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenuItem6 = new javax.swing.JMenuItem();
@@ -412,7 +416,7 @@ public class JacksGL extends javax.swing.JFrame {
         glPanel.setLayout(glPanelLayout);
         glPanelLayout.setHorizontalGroup(
             glPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 332, Short.MAX_VALUE)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
         glPanelLayout.setVerticalGroup(
             glPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -962,6 +966,17 @@ public class JacksGL extends javax.swing.JFrame {
             }
         });
 
+        jLabel15.setText("Environment");
+
+        sldEnvReflection.setValue(0);
+        sldEnvReflection.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                sldEnvReflectionStateChanged(evt);
+            }
+        });
+
+        jLabel16.setText("Reflection");
+
         javax.swing.GroupLayout pnlMaterialControlLayout = new javax.swing.GroupLayout(pnlMaterialControl);
         pnlMaterialControl.setLayout(pnlMaterialControlLayout);
         pnlMaterialControlLayout.setHorizontalGroup(
@@ -997,7 +1012,13 @@ public class JacksGL extends javax.swing.JFrame {
                     .addGroup(pnlMaterialControlLayout.createSequentialGroup()
                         .addComponent(lblSpecExp1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(sldAlpha, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(sldAlpha, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(pnlMaterialControlLayout.createSequentialGroup()
+                        .addGroup(pnlMaterialControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel15)
+                            .addComponent(jLabel16))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(sldEnvReflection, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         pnlMaterialControlLayout.setVerticalGroup(
@@ -1019,7 +1040,7 @@ public class JacksGL extends javax.swing.JFrame {
                     .addComponent(spnSpecExp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlMaterialControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblSpecExp1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblSpecExp1, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
                     .addComponent(sldAlpha, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlMaterialControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1033,7 +1054,14 @@ public class JacksGL extends javax.swing.JFrame {
                 .addGroup(pnlMaterialControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblNormalAmount)
                     .addComponent(spnNormalAmount, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(35, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlMaterialControlLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnlMaterialControlLayout.createSequentialGroup()
+                        .addComponent(jLabel15)
+                        .addGap(0, 0, 0)
+                        .addComponent(jLabel16))
+                    .addComponent(sldEnvReflection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout pnlMaterialEditLayout = new javax.swing.GroupLayout(pnlMaterialEdit);
@@ -1175,7 +1203,7 @@ public class JacksGL extends javax.swing.JFrame {
                 .addComponent(pnlLightEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(pnlMaterialEdit, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(20, Short.MAX_VALUE))
         );
 
         jScrollPane1.setViewportView(jPanel2);
@@ -1204,6 +1232,15 @@ public class JacksGL extends javax.swing.JFrame {
             }
         });
         jMenu2.add(jMenuItem3);
+
+        jMenuItem7.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItem7.setText("Select All");
+        jMenuItem7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem7ActionPerformed(evt);
+            }
+        });
+        jMenu2.add(jMenuItem7);
 
         jMenuItem5.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DELETE, 0));
         jMenuItem5.setText("Delete");
@@ -1243,15 +1280,15 @@ public class JacksGL extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jProgressBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(glPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel2)
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jProgressBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(0, 229, Short.MAX_VALUE))
+                            .addComponent(glPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -1397,7 +1434,8 @@ public class JacksGL extends javax.swing.JFrame {
                 @Override
                 public void run() {
                     long progress = 0;
-                    JacksGeometry newObject = new JacksGeometry(null);
+                    JacksGeometry readingObject = null;
+                    int vertexIndexOffset = 0;
                     BufferedReader reader = null;
                     boolean smoothMode = false;
                     boolean vertexNormalSpecified = false;
@@ -1505,9 +1543,35 @@ public class JacksGL extends javax.swing.JFrame {
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
+                            } else if (line.startsWith("o")) {
+                                if (readingObject != null) {
+                                    for (JacksFace face : readingObject.faceList) {
+                                        if (face.vertexList.length >= 3) {
+                                            face.calculateNormalAndCenter();
+                                            if (!vertexNormalSpecified || true) {
+                                                for (int i : face.vertexList) {
+                                                    face.parent.vertexList[i].normal.add(face.normal);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    for (int i = 0; i < readingObject.vertexList.length; i++) {
+                                        readingObject.vertexList[i].normal.normalize();
+                                    }
+                                    vertexIndexOffset += readingObject.vertexList.length;
+                                    glPanel.addGeometry(readingObject);
+                                }
+                                String name = line.substring("o".length()).trim();
+                                System.out.println(name);
+                                if (name.isEmpty()) {
+                                    name = null;
+                                }
+                                readingObject = new JacksGeometry(name);
                             } else if (line.startsWith("v ")) {
+                                if (readingObject == null)
+                                    readingObject = new JacksGeometry(null);
                                 String[] att = line.split("\\s+");
-                                newObject.addVertex(Float.parseFloat(att[1]),
+                                readingObject.addVertex(Float.parseFloat(att[1]),
                                         Float.parseFloat(att[2]),
                                         Float.parseFloat(att[3]));
                             } else if (line.startsWith("vt ")) {
@@ -1517,7 +1581,7 @@ public class JacksGL extends javax.swing.JFrame {
                                         Float.parseFloat(att[2])));
                             } else if (line.startsWith("vn ")) {
 //                                String[] att = line.split("\\s+");
-//                                newObject.vertexList[currentVertex].normal
+//                                readingObject.vertexList[currentVertex].normal
 //                                        .setXYZ(Float.parseFloat(att[1]),
 //                                                Float.parseFloat(att[2]),
 //                                                Float.parseFloat(att[3]));
@@ -1528,6 +1592,8 @@ public class JacksGL extends javax.swing.JFrame {
                                 currentMaterial = materialMap.get(
                                         line.substring("usemtl ".length()));
                             } else if (line.startsWith("f ")) {
+                                if (readingObject == null)
+                                    readingObject = new JacksGeometry(null);
                                 String[] att = line.replaceAll("\\s+", " ").split(" ");
                                 int[] newFace = new int[att.length - 1];
                                 JacksFace.UVCoordinate[] newFaceTexture = null;
@@ -1537,16 +1603,16 @@ public class JacksGL extends javax.swing.JFrame {
                                             newFaceTexture = new JacksFace.UVCoordinate[att.length - 1];
                                         }
                                         String[] arguments = att[i + 1].split("/");
-                                        newFace[i] = Integer.parseInt(arguments[0]) - 1;
+                                        newFace[i] = Integer.parseInt(arguments[0]) - 1 - vertexIndexOffset;
                                         if (!arguments[1].isEmpty()) {
                                             newFaceTexture[i] = uvList.get(
                                                     Integer.parseInt(arguments[1]) - 1);
                                         }
                                     } else {
-                                        newFace[i] = Integer.parseInt(att[i + 1]) - 1;
+                                        newFace[i] = Integer.parseInt(att[i + 1]) - 1 - vertexIndexOffset;
                                     }
                                 }
-                                JacksFace newJacksFace = newObject.addFace(newFace);
+                                JacksFace newJacksFace = readingObject.addFace(newFace);
                                 newJacksFace.smooth = smoothMode;
                                 if (newFaceTexture != null) {
                                     newJacksFace.setUV(newFaceTexture);
@@ -1570,10 +1636,7 @@ public class JacksGL extends javax.swing.JFrame {
                             }
                         }
                     }
-                    int faceCount = 0;
-                    for (JacksFace face : newObject.faceList) {
-                        jProgressBar1.setValue((faceCount++)
-                                * jProgressBar1.getMaximum() / newObject.faceList.length);
+                    for (JacksFace face : readingObject.faceList) {
                         if (face.vertexList.length >= 3) {
                             face.calculateNormalAndCenter();
                             if (!vertexNormalSpecified || true) {
@@ -1583,13 +1646,13 @@ public class JacksGL extends javax.swing.JFrame {
                             }
                         }
                     }
-                    for (int i = 0; i < newObject.vertexList.length; i++) {
-                        newObject.vertexList[i].normal.normalize();
+                    for (int i = 0; i < readingObject.vertexList.length; i++) {
+                        readingObject.vertexList[i].normal.normalize();
                     }
                     jProgressBar1.setValue(0);
-                    glPanel.addGeometry(newObject);
+                    glPanel.addGeometry(readingObject);
                     refreshObjectList();
-                    System.out.println(newObject.name);
+                    System.out.println(readingObject.name);
                 }
             };
 
@@ -1790,7 +1853,7 @@ public class JacksGL extends javax.swing.JFrame {
                 glPanel.addObject(newObject);
                 glPanel.selectedObjects.add(newObject);
                 glPanel.activeObject = newObject;
-//                System.out.println(object.name + " --> " + newObject.name);
+//                System.out.println(object.name + " --> " + readingObject.name);
             }
             System.out.println("dootster");
             for (JacksObject object : glPanel.selectedObjects) {
@@ -1884,6 +1947,14 @@ public class JacksGL extends javax.swing.JFrame {
         applyMaterialControl();
     }//GEN-LAST:event_spnNormalAmountStateChanged
 
+    private void jMenuItem7ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem7ActionPerformed
+        lstObjects.setSelectionInterval(0, lstObjects.getModel().getSize());
+    }//GEN-LAST:event_jMenuItem7ActionPerformed
+
+    private void sldEnvReflectionStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_sldEnvReflectionStateChanged
+        applyMaterialControl();
+    }//GEN-LAST:event_sldEnvReflectionStateChanged
+
     void applyResolution() {
         glPanel.forceResolution = cbxForceRes.isSelected();
         glPanel.resolutionWidth = (Integer) spnWidth.getValue();
@@ -1970,7 +2041,6 @@ public class JacksGL extends javax.swing.JFrame {
     }
 
     void populateMaterialControl(JacksMaterial material) {
-//        System.out.println("doop");
         objectLock = true;
         pnlDiffuseColor.setBackground(new Color(material.r, material.g, material.b));
         pnlSpecularColor.setBackground(new Color(material.rS, material.gS, material.bS));
@@ -1987,6 +2057,8 @@ public class JacksGL extends javax.swing.JFrame {
         pnlTexture.paint(pnlTexture.getGraphics());
         pnlNormalMap.paint(pnlNormalMap.getGraphics());
         spnNormalAmount.setValue(material.n);
+        sldEnvReflection.setValue((int) (material.environmentReflection
+                * sldEnvReflection.getMaximum()));
         objectLock = false;
     }
 
@@ -2028,6 +2100,9 @@ public class JacksGL extends javax.swing.JFrame {
             activeMaterial.specularExponent = (int) getFloatFromSpinner(spnSpecExp);
             activeMaterial.a = (float) sldAlpha.getValue() / sldAlpha.getMaximum();
             activeMaterial.n = getFloatFromSpinner(spnNormalAmount);
+            activeMaterial.environmentReflection = 
+                    (float) sldEnvReflection.getValue()
+                    / sldEnvReflection.getMaximum();;
         }
     }
 
@@ -2138,6 +2213,8 @@ public class JacksGL extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -2155,6 +2232,7 @@ public class JacksGL extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
     private javax.swing.JMenuItem jMenuItem6;
+    private javax.swing.JMenuItem jMenuItem7;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JProgressBar jProgressBar1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -2190,6 +2268,7 @@ public class JacksGL extends javax.swing.JFrame {
     private javax.swing.JSlider sldAlpha;
     private javax.swing.JSlider sldAmbient;
     private javax.swing.JSlider sldAngle;
+    private javax.swing.JSlider sldEnvReflection;
     private javax.swing.JSlider sldLightBlue;
     private javax.swing.JSlider sldLightGreen;
     private javax.swing.JSlider sldLightRed;
