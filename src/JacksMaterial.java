@@ -22,6 +22,7 @@ public class JacksMaterial {
     private int height = 0;
     private int widthNormal = 0;
     private int heightNormal = 0;
+    private int textureIndex;
     private float c0, c1, c2, c3, alphaX, alphaY;
     char[] texture;
     char[] normalMap;
@@ -134,6 +135,20 @@ public class JacksMaterial {
                 + alphaY * (alphaX * c2 + (1 - alphaX) * c3);
     }
 
+    int getRGB(float x, float y) {
+        textureIndex = (rotateNumber((int) ((1 - y) * (height)), height) * width
+                + rotateNumber((int) (x * (width)), width)) * 3;
+        return (texture[textureIndex + 2] << 16) + (texture[textureIndex + 1] << 8) + 
+                (texture[textureIndex]);
+    }
+    
+    int getNormal(float x, float y) {
+        textureIndex = (rotateNumber((int) ((1 - y) * (heightNormal)), heightNormal) * widthNormal
+                + rotateNumber((int) (x * (widthNormal)), widthNormal)) * 3;
+        return (normalMap[textureIndex + 2] << 16) + (normalMap[textureIndex + 1] << 8) + 
+                (normalMap[textureIndex]);
+    }
+    
     float getNormalZ(float x, float y) {
         return (float) (normalMap[(rotateNumber((int) ((1 - y) * (heightNormal)), heightNormal) * widthNormal
                 + rotateNumber((int) (x * (widthNormal)), widthNormal)) * 3]) / 255.0f;
