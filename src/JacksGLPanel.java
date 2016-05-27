@@ -48,7 +48,8 @@ public class JacksGLPanel extends javax.swing.JPanel {
     float othogonalHeight = 10;
 
     float cameraAngle = (float) Math.PI * 60.0f / 180.0f;
-    float lowClipping = .5f;
+    float lowClipping = .4f;
+    private JacksPixel[][] pixel = null;
     private BufferedImage rendered;
     private BufferedImage hdri;
     private BufferedImage tempImage;
@@ -190,6 +191,12 @@ public class JacksGLPanel extends javax.swing.JPanel {
             renderedBytes = ((DataBufferByte) rendered.getData().getDataBuffer())
                     .getData();
             renderedRaster = Raster.createRaster(rendered.getSampleModel(), new DataBufferByte(renderedBytes, renderedBytes.length), null);
+            pixel = new JacksPixel[panelHeight][panelWidth];
+            for (JacksPixel[] row : pixel) {
+                for (int i = 0; i < row.length; i++) {
+                    row[i] = new JacksPixel();
+                }
+            }
             recalculateCamera();
         }
     }
@@ -205,6 +212,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
         if (rendered != null && renderedBytes != null) {
             try {
                 clearDepthBuffer();
+
                 if (hdri != null) {
                     if (hdriMode) {
                         renderBackground();
@@ -216,6 +224,12 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 } else {
                     Arrays.fill(renderedBytes, (byte) 0);
                 }
+                for (JacksPixel[] row : pixel) {
+                    for (JacksPixel px : row) {
+                        px.draw = false;
+                    }
+                }
+
                 updateTempLightList();
                 transformVerticesAndFaces();
                 selectX1 = Integer.MAX_VALUE;
@@ -245,15 +259,27 @@ public class JacksGLPanel extends javax.swing.JPanel {
                                 continue;
                             }
                             polygonDrawnTemp++;
-                            drawFace(face);
+                            processFace(face);
                         } else {
                             transparentFaceList.add(face);
                         }
                     }
+                    for (int y = 0; y < panelHeight; y++) {
+                        for (int x = 0; x < panelWidth; x++) {
+                            drawPixel(pixel[y][x], x, y);
+                            pixel[y][x].draw = false;
+                        }
+                    }
                     for (JacksFace face : transparentFaceList) {
                         polygonDrawnTemp++;
-                        drawFace(face);
+                        processFace(face);
                     }
+                    for (int y = 0; y < panelHeight; y++) {
+                        for (int x = 0; x < panelWidth; x++) {
+                            drawPixel(pixel[y][x], x, y);
+                        }
+                    }
+
                 }
                 rendered.setData(renderedRaster);
 
@@ -330,23 +356,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
         return stopTime - startTime;
     }
 
-    private void drawObject(JacksGeometry object, boolean alwaysOnTop) {
-        tempOrigin.copyAttribute(origin);
-        transformOrigin(tempOrigin, object);
-        transparentFaceList.clear();
-        for (JacksFace face : object.faceList) {
-            if (face.material.a == 1) {
-                drawFace(face);
-            } else {
-                transparentFaceList.add(face);
-            }
-        }
-        for (JacksFace face : transparentFaceList) {
-            drawFace(face);
-        }
-    }
-
-    private void drawFace(JacksFace face) {
+    private void processFace(JacksFace face) {
         if (face.vertexList.length >= 3) {
             toCenter.setXYZ(face.centerCopy.x, face.centerCopy.y, face.centerCopy.z);
 
@@ -447,11 +457,6 @@ public class JacksGLPanel extends javax.swing.JPanel {
                     }
                 }
 
-//                if (!(face.smooth && smooth || forceSmooth)) {
-//                    calculateIllumination(faceIllumination,
-//                            face.centerCopy.x, face.centerCopy.y,
-//                            face.centerCopy.z, face.normalCopy, face.material);
-//                }
                 if (tempUVList.size() > 0) {
                     uv[0] = tempUVList.get(0);
                     uv[1] = tempUVList.get(i);
@@ -616,18 +621,18 @@ public class JacksGLPanel extends javax.swing.JPanel {
                                     break;
                                 }
                             }
-                            drawPixel(face, x, y, i, false);
+                            preparePixel(face, x, y, i, false);
                         }
                     }
-                    drawPixel(face, toXOnScreen, y, i, false);
+                    preparePixel(face, toXOnScreen, y, i, false);
                 }
             }
         }
     }
 
-    private void drawPixel(JacksFace face, int x, int y, int i, boolean alwaysOnTop) {
-        if (x > 0 && x < rendered.getWidth()
-                && y > 0 && y < rendered.getHeight()) {
+    private void preparePixel(JacksFace face, int x, int y, int i, boolean alwaysOnTop) {
+        if (x > 0 && x < panelWidth
+                && y > 0 && y < panelHeight) {
             currentZ = interpolateZbyX(
                     fromX, fromZ, toX, toZ,
                     x, panelWidth, cameraWidth);
@@ -641,25 +646,14 @@ public class JacksGLPanel extends javax.swing.JPanel {
             }
             if (-currentZ > 0 && -currentZ < depthBuffer[y][x] || alwaysOnTop) {
                 linear(currentVertex, alpha, fromVertex, toVertex);
-                if (!(face.smooth && smooth || forceSmooth))
+                if (!(face.smooth && smooth || forceSmooth)) {
                     currentVertex.normal.copyXYZ(face.normalCopy);
+                }
                 if (face.uv.length > 0 && face.uv[0] != null) {
                     linear(currentUV, alpha, fromUV, toUV);
                 } else {
                     currentUV.u = 0;
                     currentUV.v = 0;
-                }
-                if (face.material.texture == null || !texture) {
-                    r = face.material.r;
-                    g = face.material.g;
-                    b = face.material.b;
-                } else {
-                    rgb = face.material.getRGB(currentUV.u, currentUV.v);
-                    b = (float) (rgb & 0xFF) / 255.0f;
-                    rgb >>= 8;
-                    g = (float) (rgb & 0xFF) / 255.0f;
-                    rgb >>= 8;
-                    r = (float) (rgb & 0xFF) / 255.0f;
                 }
                 if (face.material.normalMap != null) {
                     rgb = face.material.getNormal(currentUV.u, currentUV.v);
@@ -672,73 +666,104 @@ public class JacksGLPanel extends javax.swing.JPanel {
                     currentVertex.normal.normalize();
                 }
 
-                // If the face is marked as smooth or force smooth is on.
-                calculateIllumination(currentIllumination,
-                        currentVertex.x, currentVertex.y,
-                        currentVertex.z, currentVertex.normal, face.material);
-
-                // Set diffuse illumination
-                r = r * currentIllumination.dR;
-                g = g * currentIllumination.dG;
-                b = b * currentIllumination.dB;
-
-                if (face.material.a < 1) { // If material is transparent
-                    r = (1 - face.material.a)
-                            * byteToFloat(renderedBytes[(y * panelWidth + x) * 3 + 2]) / 255
-                            + face.material.a * r;
-                    g = (1 - face.material.a)
-                            * byteToFloat(renderedBytes[(y * panelWidth + x) * 3 + 1]) / 255
-                            + face.material.a * g;
-                    b = (1 - face.material.a)
-                            * byteToFloat(renderedBytes[(y * panelWidth + x) * 3]) / 255
-                            + face.material.a * b;
-                }
-
-                // Add specular highlight.
-                r += currentIllumination.sR;
-                g += currentIllumination.sG;
-                b += currentIllumination.sB;
-
-                // Environmental reflection.
-                if (face.material.environmentReflection > 0 && hdri != null) {
-                    tempVector.setXYZ(currentVertex.x, currentVertex.y, currentVertex.z);
-                    tempVector.add(JacksVector.multiply(-2
-                            * tempVector.dotProduct(currentVertex.normal),
-                            currentVertex.normal));
-                    tempVector.rotateX(cameraRotationX);
-                    tempVector.rotateZ(cameraRotationZ);
-                    tempVector.rotateY(cameraRotationY);
-                    tempVector.rotateX(backgroundRotationX);
-                    tempVector.rotateZ(backgroundRotationZ);
-                    tempVector.rotateY(backgroundRotationY);
-                    int rgb = getRGBByVector(tempVector);
-                    float red = (float) ((rgb >> 16) & 0xFF) / 255;
-                    float green = (float) ((rgb >> 8) & 0xFF) / 255;
-                    float blue = (float) (rgb & 0xFF) / 255;
-                    r += face.material.environmentReflection * red;
-                    g += face.material.environmentReflection * green;
-                    b += face.material.environmentReflection * blue;
-                }
-
-                // Clamp rgb to 1.
-                if (r > 1) {
-                    r = 1;
-                }
-                if (g > 1) {
-                    g = 1;
-                }
-                if (b > 1) {
-                    b = 1;
-                }
-                renderedBytes[(y * panelWidth + x) * 3]
-                        = (byte) (b * 255);
-                renderedBytes[(y * panelWidth + x) * 3 + 1]
-                        = (byte) (g * 255);
-                renderedBytes[(y * panelWidth + x) * 3 + 2]
-                        = (byte) (r * 255);
+                pixel[y][x].draw = true;
+                pixel[y][x].x = currentVertex.x;
+                pixel[y][x].y = currentVertex.y;
+                pixel[y][x].z = currentVertex.z;
+                pixel[y][x].normal.copyXYZ(currentVertex.normal);
+                pixel[y][x].material = face.material;
+                pixel[y][x].face = face;
+                pixel[y][x].u = currentUV.u;
+                pixel[y][x].v = currentUV.v;
                 depthBuffer[y][x] = -currentZ;
             }
         }
+    }
+
+    void drawPixel(JacksPixel currentPixel, int x, int y) {
+        if (!currentPixel.draw) {
+            return;
+        }
+
+        if (currentPixel.material.texture == null || !texture) {
+            r = currentPixel.material.r;
+            g = currentPixel.material.g;
+            b = currentPixel.material.b;
+        } else {
+            rgb = currentPixel.material.getRGB(currentPixel.u, currentPixel.v);
+            b = (float) (rgb & 0xFF) / 255.0f;
+            rgb >>= 8;
+            g = (float) (rgb & 0xFF) / 255.0f;
+            rgb >>= 8;
+            r = (float) (rgb & 0xFF) / 255.0f;
+        }
+
+        calculateIllumination(currentIllumination,
+                currentPixel.x, currentPixel.y,
+                currentPixel.z, currentPixel.normal, currentPixel.material);
+
+        // Set diffuse illumination
+        r = r * currentIllumination.dR;
+        g = g * currentIllumination.dG;
+        b = b * currentIllumination.dB;
+
+        if (currentPixel.material.a < 1) { // If material is transparent
+            r = (1 - currentPixel.material.a)
+                    * byteToFloat(renderedBytes[(y
+                            * panelWidth + x) * 3 + 2]) / 255
+                    + currentPixel.material.a * r;
+            g = (1 - currentPixel.material.a)
+                    * byteToFloat(renderedBytes[(y
+                            * panelWidth + x) * 3 + 1]) / 255
+                    + currentPixel.material.a * g;
+            b = (1 - currentPixel.material.a)
+                    * byteToFloat(renderedBytes[(y
+                            * panelWidth + x) * 3]) / 255
+                    + currentPixel.material.a * b;
+        }
+
+        // Add specular highlight.
+        r += currentIllumination.sR;
+        g += currentIllumination.sG;
+        b += currentIllumination.sB;
+
+        // Environmental reflection.
+        if (currentPixel.material.environmentReflection > 0 && hdri != null) {
+            tempVector.setXYZ(currentPixel.x, currentPixel.y, currentPixel.z);
+            tempVector.add(JacksVector.multiply(-2
+                    * tempVector.dotProduct(currentVertex.normal),
+                    currentPixel.normal));
+            tempVector.rotateX(cameraRotationX);
+            tempVector.rotateZ(cameraRotationZ);
+            tempVector.rotateY(cameraRotationY);
+            tempVector.rotateX(backgroundRotationX);
+            tempVector.rotateZ(backgroundRotationZ);
+            tempVector.rotateY(backgroundRotationY);
+            int rgb = getRGBByVector(tempVector);
+            float red = (float) ((rgb >> 16) & 0xFF) / 255;
+            float green = (float) ((rgb >> 8) & 0xFF) / 255;
+            float blue = (float) (rgb & 0xFF) / 255;
+            r += currentPixel.material.environmentReflection * red;
+            g += currentPixel.material.environmentReflection * green;
+            b += currentPixel.material.environmentReflection * blue;
+        }
+
+        // Clamp rgb to 1.
+        if (r > 1) {
+            r = 1;
+        }
+        if (g > 1) {
+            g = 1;
+        }
+        if (b > 1) {
+            b = 1;
+        }
+        renderedBytes[(y * panelWidth + x) * 3]
+                = (byte) (b * 255);
+        renderedBytes[(y * panelWidth + x) * 3 + 1]
+                = (byte) (g * 255);
+        renderedBytes[(y * panelWidth + x) * 3 + 2]
+                = (byte) (r * 255);
     }
 
     void calculateUp(JacksVector upVector, JacksVertex v1, JacksVertex v2,

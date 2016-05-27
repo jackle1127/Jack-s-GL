@@ -1950,8 +1950,8 @@ public class JacksGL extends javax.swing.JFrame {
     }//GEN-LAST:event_pnlSpecularColorMousePressed
 
     private void spnSpecExpStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spnSpecExpStateChanged
-        if (getFloatFromSpinner(spnSpecExp) < 0) {
-            spnSpecExp.setValue(0.0f);
+        if (getFloatFromSpinner(spnSpecExp) < 1) {
+            spnSpecExp.setValue(1.0f);
         }
         applyMaterialControl();
     }//GEN-LAST:event_spnSpecExpStateChanged
