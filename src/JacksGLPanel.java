@@ -540,26 +540,31 @@ public class JacksGLPanel extends javax.swing.JPanel {
                     }
                     if (y <= point[order[1]].y) {
                         // First half
-
-                        fromZ = interpolateZbyY(projectedVertex[order[0]].y,
-                                projectedVertex[order[0]].z,
-                                projectedVertex[order[1]].y,
-                                projectedVertex[order[1]].z,
-                                y, panelHeight, cameraHeight);
-
+                        if (projectedVertex[order[0]].y
+                                != projectedVertex[order[1]].y) {
+                            fromZ = interpolateZbyY(projectedVertex[order[0]].y,
+                                    projectedVertex[order[0]].z,
+                                    projectedVertex[order[1]].y,
+                                    projectedVertex[order[1]].z,
+                                    y, panelHeight, cameraHeight);
+                        } else {
+                            fromZ = projectedVertex[order[1]].z;
+                        }
                         if (!testDifference(projectedVertex[order[0]].z,
                                 projectedVertex[order[1]].z)) {
                             alpha = (fromZ - projectedVertex[order[0]].z)
                                     / (projectedVertex[order[1]].z
                                     - projectedVertex[order[0]].z);
-                        } else {
+                        } else if (projectedVertex[order[0]].y
+                                != projectedVertex[order[1]].y) {
                             alpha = point[order[0]].y == point[order[1]].y
                                     ? 0
                                     : (float) (y - point[order[0]].y)
                                     / (float) (point[order[1]].y
                                     - point[order[0]].y);
+                        } else {
+                            alpha = 1;
                         }
-
                         fromX = linear(alpha, projectedVertex[order[0]].x,
                                 projectedVertex[order[1]].x);
                         if (face.uv.length > 0 && uv[0] != null) {
@@ -571,22 +576,31 @@ public class JacksGLPanel extends javax.swing.JPanel {
                         linear(fromVertex, alpha, projectedVertex[order[0]],
                                 projectedVertex[order[1]]);
                     } else {// Second half
-                        fromZ = interpolateZbyY(projectedVertex[order[1]].y,
-                                projectedVertex[order[1]].z,
-                                projectedVertex[order[2]].y,
-                                projectedVertex[order[2]].z,
-                                y, panelHeight, cameraHeight);
+                        if (projectedVertex[order[1]].y
+                                != projectedVertex[order[2]].y) {
+                            fromZ = interpolateZbyY(projectedVertex[order[1]].y,
+                                    projectedVertex[order[1]].z,
+                                    projectedVertex[order[2]].y,
+                                    projectedVertex[order[2]].z,
+                                    y, panelHeight, cameraHeight);
+                        } else {
+                            fromZ = projectedVertex[order[1]].z;
+                        }
 
-                        if (!testDifference(projectedVertex[order[1]].z, projectedVertex[order[2]].z)) {
+                        if (!testDifference(projectedVertex[order[1]].z,
+                                projectedVertex[order[2]].z)) {
                             alpha = (fromZ - projectedVertex[order[1]].z)
                                     / (projectedVertex[order[2]].z
                                     - projectedVertex[order[1]].z);
-                        } else {
+                        } else if (projectedVertex[order[1]].y
+                                != projectedVertex[order[2]].y) {
                             alpha = point[order[1]].y == point[order[2]].y
                                     ? 0
                                     : (float) (y - point[order[1]].y)
                                     / (float) (point[order[2]].y
                                     - point[order[1]].y);
+                        } else {
+                            alpha = 0;
                         }
 
                         fromX = linear(alpha, projectedVertex[order[1]].x,
@@ -863,8 +877,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
                             + lightVector.y * lightVector.y
                             + lightVector.z * lightVector.z;
 
-                    luminance = -lightVector.dotProduct(n)
-                            / lightDistance;
+                    luminance = -lightVector.dotProduct(n) / lightDistance;
                     if (luminance > 0) {
                         illumination.dR += light.energy * (float) light.r / 255.0f * luminance;
                         illumination.dG += light.energy * (float) light.g / 255.0f * luminance;
@@ -882,7 +895,8 @@ public class JacksGLPanel extends javax.swing.JPanel {
                             luminanceS = Math.abs(luminanceS);
                         }
                         if (luminanceS > 0) {
-                            luminanceS = (float) Math.pow(luminanceS, material.specularExponent);
+                            luminanceS = (float) Math.pow(luminanceS,
+                                    material.specularExponent);
                             illumination.sR += material.rS * luminanceS;
                             illumination.sG += material.gS * luminanceS;
                             illumination.sB += material.bS * luminanceS;
