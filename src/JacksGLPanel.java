@@ -43,6 +43,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
     boolean forceResolution = false;
     boolean showNormal = false;
     boolean zSort = false;
+    boolean normalMapping = true;
     int resolutionWidth = -1;
     int resolutionHeight = -1;
     float othogonalHeight = 10;
@@ -325,7 +326,6 @@ public class JacksGLPanel extends javax.swing.JPanel {
                         }
                     }
                     if (showNormal) {
-                        int i = 0;
                         g.setColor(Color.CYAN);
                         for (JacksVertex vertex : transformedVertexMap) {
                             if (vertex.z > 0) {
@@ -555,15 +555,12 @@ public class JacksGLPanel extends javax.swing.JPanel {
                             alpha = (fromZ - projectedVertex[order[0]].z)
                                     / (projectedVertex[order[1]].z
                                     - projectedVertex[order[0]].z);
-                        } else if (projectedVertex[order[0]].y
-                                != projectedVertex[order[1]].y) {
+                        } else {
                             alpha = point[order[0]].y == point[order[1]].y
                                     ? 0
                                     : (float) (y - point[order[0]].y)
                                     / (float) (point[order[1]].y
                                     - point[order[0]].y);
-                        } else {
-                            alpha = 1;
                         }
                         fromX = linear(alpha, projectedVertex[order[0]].x,
                                 projectedVertex[order[1]].x);
@@ -592,17 +589,13 @@ public class JacksGLPanel extends javax.swing.JPanel {
                             alpha = (fromZ - projectedVertex[order[1]].z)
                                     / (projectedVertex[order[2]].z
                                     - projectedVertex[order[1]].z);
-                        } else if (projectedVertex[order[1]].y
-                                != projectedVertex[order[2]].y) {
+                        } else {
                             alpha = point[order[1]].y == point[order[2]].y
                                     ? 0
                                     : (float) (y - point[order[1]].y)
                                     / (float) (point[order[2]].y
                                     - point[order[1]].y);
-                        } else {
-                            alpha = 0;
                         }
-
                         fromX = linear(alpha, projectedVertex[order[1]].x,
                                 projectedVertex[order[2]].x);
                         if (face.uv.length > 0 && uv[0] != null) {
@@ -669,7 +662,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
                     currentUV.u = 0;
                     currentUV.v = 0;
                 }
-                if (face.material.normalMap != null) {
+                if (face.material.normalMap != null && normalMapping) {
                     rgb = face.material.getNormal(currentUV.u, currentUV.v);
                     currentUp.copyXYZ(up);
                     currentRight.copyXYZ(right);
@@ -689,6 +682,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
                 pixel[y][x].face = face;
                 pixel[y][x].u = currentUV.u;
                 pixel[y][x].v = currentUV.v;
+
                 depthBuffer[y][x] = -currentZ;
             }
         }
@@ -877,11 +871,11 @@ public class JacksGLPanel extends javax.swing.JPanel {
                             + lightVector.y * lightVector.y
                             + lightVector.z * lightVector.z;
 
-                    luminance = -lightVector.dotProduct(n) / lightDistance;
+                    luminance = -lightVector.dotProduct(n) * light.energy / lightDistance;
                     if (luminance > 0) {
-                        illumination.dR += light.energy * (float) light.r / 255.0f * luminance;
-                        illumination.dG += light.energy * (float) light.g / 255.0f * luminance;
-                        illumination.dB += light.energy * (float) light.b / 255.0f * luminance;
+                        illumination.dR += (float) light.r / 255.0f * luminance;
+                        illumination.dG += (float) light.g / 255.0f * luminance;
+                        illumination.dB += (float) light.b / 255.0f * luminance;
                     }
                     // If light shines on face, not behind.
                     if (lightVector.dotProduct(n) < 0) {
@@ -897,6 +891,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
                         if (luminanceS > 0) {
                             luminanceS = (float) Math.pow(luminanceS,
                                     material.specularExponent);
+                            luminanceS = luminanceS * light.energy / lightDistance;
                             illumination.sR += material.rS * luminanceS;
                             illumination.sG += material.gS * luminanceS;
                             illumination.sB += material.bS * luminanceS;
@@ -918,13 +913,12 @@ public class JacksGLPanel extends javax.swing.JPanel {
 
                         luminanceS = -lightVector.dotProduct(toCenter);
                         if (luminanceS > 0) {
-                            tempFloat = luminanceS;
-                            for (int i = 1; i <= material.specularExponent; i++) {
-                                luminanceS *= tempFloat;
-                            }
-                            illumination.sR += material.rS * luminanceS;
-                            illumination.sG += material.gS * luminanceS;
-                            illumination.sB += material.bS * luminanceS;
+                            luminanceS = (float) Math.pow(luminanceS,
+                                    material.specularExponent);
+                            
+                            illumination.sR += light.energy * material.rS * luminanceS;
+                            illumination.sG += light.energy * material.gS * luminanceS;
+                            illumination.sB += light.energy * material.bS * luminanceS;
                         }
                     }
                 }
@@ -1360,9 +1354,7 @@ public class JacksGLPanel extends javax.swing.JPanel {
     }
 
     private float byteToFloat(byte number) {
-        return number >= 0
-                ? number
-                : number + 256;
+        return (float) Byte.toUnsignedLong(number);
     }
 
     JacksObject selectOnScreen(Point mouseLocation) {
